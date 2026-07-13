@@ -96,6 +96,11 @@ http://localhost:3000
 - Use an Admin account to access `/dashboard/admin` and `/api/admin/dashboard`
 - The site protects API routes with `verifyToken` and role-based middleware
 
+## 🤝 Contributors
+
+- [ItsNafi](https://github.com/ItsNafi)
+- [33sakib33](https://github.com/33sakib33)
+
 ## 🔗 Repository
 
 Remote GitHub: https://github.com/ItsNafi/WASTE2WORTH
