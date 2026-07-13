@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Citizen Dashboard — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/citizen" class="nav-item active">
+          <span class="material-icons-outlined">home</span> Dashboard
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <!-- HEADER -->
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search..." aria-label="Search">
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">My Scrap Dashboard</h1>
+          <p class="page-subtitle">List your scrap materials and earn green points.</p>
+        </div>
+
+        <div class="stats-grid animate-slide-up">
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Total Listings</span>
+              <div class="stat-icon green"><span class="material-icons-outlined">inventory_2</span></div>
+            </div>
+            <div class="stat-value" id="statTotal">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Green Points</span>
+              <div class="stat-icon amber"><span class="material-icons-outlined">stars</span></div>
+            </div>
+            <div class="stat-value" id="statPoints">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Active Listings</span>
+              <div class="stat-icon blue"><span class="material-icons-outlined">local_shipping</span></div>
+            </div>
+            <div class="stat-value" id="statActive">0</div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">List New Scrap Material</h2>
+            </div>
+            <form id="scrapForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label class="form-label" for="category">Category</label>
+                <select id="category" name="category" class="form-select" required>
+                  <option value="" disabled selected>Select category...</option>
+                  <option value="Plastic">Plastic</option>
+                  <option value="Metal">Metal</option>
+                  <option value="Paper">Paper</option>
+                  <option value="Glass">Glass</option>
+                  <option value="E-Waste">E-Waste</option>
+                  <option value="Textile">Textile</option>
+                  <option value="Organic">Organic</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" step="0.01" class="form-input" placeholder="e.g., 2.5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Photo (Optional)</label>
+                <input type="file" id="scrapPhoto" name="photo" accept="image/*" class="hidden">
+                <div class="upload-zone" id="uploadZone">
+                  <div class="upload-preview" id="photoPreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon">cloud_upload</span>
+                    <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+                    <div class="form-hint">PNG, JPG up to 5MB</div>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary-gradient btn-block">
+                <span class="material-icons-outlined">add_circle</span> Submit Listing
+              </button>
+            </form>
+          </div>
+
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Recent Listings</h2>
+            </div>
+            <div id="myListings">
+              <div class="loading-spinner">
+                <div class="spinner"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-lg animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Profile Settings & Upgrades</h2>
+          </div>
+          <div style="padding: var(--space-lg);">
+            <p style="margin-bottom: var(--space-md); color: var(--color-text-secondary);">Expand your impact on the circular economy. Apply for specialized roles to access more features.</p>
+            <div style="display: flex; gap: var(--space-md); flex-wrap: wrap;">
+              <button class="btn btn-outline" onclick="upgradeRole('Volunteer')">
+                <span class="material-icons-outlined">group</span> Apply as Volunteer
+              </button>
+              <button class="btn btn-outline" onclick="upgradeRole('BhangariShop')">
+                <span class="material-icons-outlined">store</span> Apply as Bhangari Shop
+              </button>
+              <button class="btn btn-outline" onclick="upgradeRole('Creator')">
+                <span class="material-icons-outlined">brush</span> Apply as Creator
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

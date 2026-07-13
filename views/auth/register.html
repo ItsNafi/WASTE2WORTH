@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — WASTE2WORTH</title>
+  <meta name="description" content="Create a new WASTE2WORTH account">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-card animate-slide-up">
+      <div class="auth-brand">
+        <span class="material-icons-outlined" style="font-size:48px;color:var(--color-primary)">eco</span>
+        <h1>WASTE2WORTH</h1>
+        <p>Join the circular economy platform.</p>
+      </div>
+      <form id="registerForm">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input type="text" id="name" name="name" class="form-input" placeholder="John Doe" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="email">Email Address</label>
+          <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-input" placeholder="Min 6 characters" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="role">Account Type</label>
+          <select id="role" name="role" class="form-select" required>
+            <option value="Citizen">Normal User</option>
+            <option value="Admin">Admin</option>
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary-gradient btn-block btn-lg">Create Account</button>
+      </form>
+      <div class="auth-footer">
+        <p>Already have an account? <a href="/login">Sign in</a></p>
+      </div>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

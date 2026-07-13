@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Dashboard — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/volunteer" class="nav-item active">
+          <span class="material-icons-outlined">event</span> Campaigns
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="downloadCertBtn" class="nav-item">
+          <span class="material-icons-outlined">card_membership</span> Certificate
+        </a>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search campaigns...">
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Upcoming Campaigns</h1>
+          <p class="page-subtitle">Join hands for a cleaner tomorrow.</p>
+        </div>
+
+        <!-- Mock QR Scanner -->
+        <div class="card mb-lg animate-slide-up" style="background: var(--color-primary-bg); border: 1px solid var(--color-primary-light);">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h3 style="color: var(--color-primary-dark); margin-bottom: 4px;">Attend Campaign</h3>
+              <p style="font-size: 14px; color: var(--color-text-secondary);">Click here to simulate scanning a campaign QR code at the site.</p>
+            </div>
+            <button id="mockScanBtn" class="btn btn-primary">
+              <span class="material-icons-outlined">qr_code_scanner</span> Mock QR Scan
+            </button>
+          </div>
+        </div>
+
+        <div id="campaignsFeed" class="product-grid animate-slide-up">
+          <div style="grid-column: 1/-1;" class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

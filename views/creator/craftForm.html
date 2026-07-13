@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>List New Craft — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/creator" class="nav-item">
+          <span class="material-icons-outlined">category</span> Raw Materials
+        </a>
+        <a href="/dashboard/creator/crafts/new" class="nav-item active">
+          <span class="material-icons-outlined">add_box</span> List New Craft
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search..." aria-label="Search">
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">List New Craft</h1>
+          <p class="page-subtitle">Share your upcycled creation with the world.</p>
+        </div>
+
+        <div class="card animate-slide-up" style="max-width: 800px; margin: 0 auto;">
+          <form id="craftForm" enctype="multipart/form-data">
+            <div class="form-group">
+              <label class="form-label" for="title">Craft Title</label>
+              <input type="text" id="title" name="title" class="form-input" placeholder="e.g., Upcycled Denim Tote Bag" required>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="description">Short Description</label>
+              <textarea id="description" name="description" class="form-textarea" placeholder="Briefly describe the product..." style="min-height: 80px;"></textarea>
+            </div>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="price">Price ($)</label>
+                <input type="number" id="price" name="price" step="0.01" class="form-input" placeholder="0.00" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="inventoryCount">Inventory Count</label>
+                <input type="number" id="inventoryCount" name="inventoryCount" min="1" value="1" class="form-input" required>
+              </div>
+            </div>
+            
+            <div class="form-group">
+              <label class="form-label" for="storyNarrative">Story Narrative</label>
+              <textarea id="storyNarrative" name="storyNarrative" class="form-textarea" placeholder="Tell the transformation story..."></textarea>
+              <span class="form-hint">How did you turn the raw scrap into this craft?</span>
+            </div>
+            
+            <div class="form-row mt-lg">
+              <div class="form-group">
+                <label class="form-label">Before Photo (Raw Scrap)</label>
+                <input type="file" id="beforePhoto" name="beforePhoto" accept="image/*" class="hidden">
+                <div class="upload-zone" id="beforeZone" style="padding: var(--space-lg);">
+                  <div class="upload-preview" id="beforePreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon" style="font-size:32px;">image</span>
+                    <div class="upload-text">Upload Before</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">After Photo (Final Craft)</label>
+                <input type="file" id="afterPhoto" name="afterPhoto" accept="image/*" class="hidden">
+                <div class="upload-zone" id="afterZone" style="padding: var(--space-lg);">
+                  <div class="upload-preview" id="afterPreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon" style="font-size:32px; color:var(--color-primary);">auto_awesome</span>
+                    <div class="upload-text">Upload After</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="mt-xl text-center">
+              <button type="submit" class="btn btn-primary-gradient btn-lg" style="min-width: 200px;">
+                <span class="material-icons-outlined">storefront</span> List Craft
+              </button>
+            </div>
+          </form>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

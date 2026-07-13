@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bhangari Buying Board — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/bhangari" class="nav-item active">
+          <span class="material-icons-outlined">shopping_cart</span> Buying Board
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search scrap..." aria-label="Search">
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Bhangari Buying Board</h1>
+          <p class="page-subtitle">Browse and purchase available scrap materials.</p>
+        </div>
+
+        <div class="stats-grid animate-slide-up">
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Available Scrap</span>
+              <div class="stat-icon green"><span class="material-icons-outlined">inventory</span></div>
+            </div>
+            <div class="stat-value" id="statAvailable">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Purchased</span>
+              <div class="stat-icon blue"><span class="material-icons-outlined">shopping_bag</span></div>
+            </div>
+            <div class="stat-value" id="statPurchased">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Green Points</span>
+              <div class="stat-icon amber"><span class="material-icons-outlined">stars</span></div>
+            </div>
+            <div class="stat-value" id="statPoints">0</div>
+          </div>
+        </div>
+
+        <div class="filter-chips animate-slide-up">
+          <button class="chip active" data-cat="All">All Categories</button>
+          <button class="chip" data-cat="Plastic">Plastic</button>
+          <button class="chip" data-cat="Metal">Metal</button>
+          <button class="chip" data-cat="Paper">Paper</button>
+          <button class="chip" data-cat="Glass">Glass</button>
+          <button class="chip" data-cat="E-Waste">E-Waste</button>
+          <button class="chip" data-cat="Textile">Textile</button>
+        </div>
+
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Available Scrap Listings</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>Seller</th>
+                  <th>Category</th>
+                  <th>Weight</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="bhangariBoard">
+                <tr>
+                  <td colspan="7" class="text-center" style="padding: 40px;">
+                    <div class="loading-spinner"><div class="spinner"></div></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

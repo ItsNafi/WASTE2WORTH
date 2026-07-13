@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raw Materials — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/creator" class="nav-item active">
+          <span class="material-icons-outlined">category</span> Raw Materials
+        </a>
+        <a href="/dashboard/creator/crafts/new" class="nav-item">
+          <span class="material-icons-outlined">add_box</span> List New Craft
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" placeholder="Search materials..." aria-label="Search">
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Raw Materials</h1>
+          <p class="page-subtitle">Source sustainable materials for your creations.</p>
+        </div>
+
+        <div class="stats-grid animate-slide-up">
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Available Materials</span>
+              <div class="stat-icon green"><span class="material-icons-outlined">category</span></div>
+            </div>
+            <div class="stat-value" id="statAvailable">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Green Points</span>
+              <div class="stat-icon amber"><span class="material-icons-outlined">stars</span></div>
+            </div>
+            <div class="stat-value" id="statPoints">0</div>
+          </div>
+        </div>
+
+        <div class="filter-chips animate-slide-up">
+          <button class="chip active" data-cat="All">All Categories</button>
+          <button class="chip" data-cat="Plastic">Plastic</button>
+          <button class="chip" data-cat="Glass">Glass</button>
+          <button class="chip" data-cat="Textile">Textile</button>
+        </div>
+
+        <div id="rawMaterialsFeed" class="product-grid animate-slide-up">
+          <div style="grid-column: 1/-1;" class="loading-spinner"><div class="spinner"></div></div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

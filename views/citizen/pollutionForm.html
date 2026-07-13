@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Report Pollution — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/citizen" class="nav-item">
+          <span class="material-icons-outlined">home</span> Dashboard
+        </a>
+        <a href="/dashboard/citizen/pollution" class="nav-item active">
+          <span class="material-icons-outlined">report_problem</span> Report Pollution
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-user" style="margin-left: auto;">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Report Pollution Zone</h1>
+          <p class="page-subtitle">Help us identify areas that need a community cleanup.</p>
+        </div>
+
+        <div class="form-row">
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Submit Report</h2>
+            </div>
+            <form id="pollutionForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label class="form-label">Location / Address</label>
+                <input type="text" id="locationPin" name="locationPin" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="description" name="description" class="form-textarea" required></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Photo Evidence (Optional)</label>
+                <input type="file" id="scrapPhoto" name="photo" accept="image/*" class="hidden">
+                <div class="upload-zone" id="uploadZone">
+                  <div class="upload-preview" id="photoPreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon">add_a_photo</span>
+                    <div class="upload-text">Upload Photo</div>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary-gradient btn-block">
+                <span class="material-icons-outlined">send</span> Submit Report
+              </button>
+            </form>
+          </div>
+          
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">My Reports</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Location</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody id="myPollutionReports">
+                  <tr><td colspan="3" class="text-center">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
