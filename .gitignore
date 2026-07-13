@@ -1,6 +1,25 @@
+# Node modules
 node_modules/
+
+# Environment variables
 .env
+
+# Build output
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+
+# App data
 public/uploads/
-database.sqlite
-*.log
+uploads/
+*.sqlite
+*.db
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# IDE/editor directories
+.vscode/
+.idea/
