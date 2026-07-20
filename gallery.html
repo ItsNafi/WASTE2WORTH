@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Before-and-After Gallery — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <!-- Link to original styles.css to reuse global rules, layout, sidebar, etc. -->
+  <link rel="stylesheet" href="/css/styles.css">
+  <!-- Custom isolated styles for Feature 7 gallery -->
+  <link rel="stylesheet" href="/css/gallery.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/citizen" class="nav-item" id="navDashboardLink">
+          <span class="material-icons-outlined">home</span> Dashboard
+        </a>
+        <a href="/storefront" class="nav-item">
+          <span class="material-icons-outlined">storefront</span> Storefront
+        </a>
+        <a href="/gallery.html" class="nav-item active">
+          <span class="material-icons-outlined">photo_library</span> B&A Gallery
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="/login" class="nav-item" id="navAuthLink">
+          <span class="material-icons-outlined">login</span> Login
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <!-- MAIN BODY -->
+    <div class="main-wrapper">
+      <!-- HEADER -->
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search">
+          <span class="material-icons-outlined">search</span>
+          <input type="text" id="gallerySearchInput" placeholder="Search by title, story or creator...">
+        </div>
+        
+        <!-- Header User Section (Hydrated dynamically in gallery.js) -->
+        <div class="header-user" id="headerUser" style="display: none;">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <!-- Hero Section -->
+        <section class="gallery-hero animate-slide-up">
+          <div class="hero-left">
+            <h1 class="hero-title">Before & After Gallery</h1>
+            <p class="hero-subtitle">Witness the creative transformation of scrap into high-value upcycled creations.</p>
+          </div>
+          <div class="hero-eco-badge">
+            <span class="material-icons-outlined">loop</span> Circular Economy
+          </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="gallery-stats animate-slide-up" style="animation-delay: 80ms;">
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">auto_awesome</span></div>
+            <div class="stat-info">
+              <span class="stat-label">Total Upcycled</span>
+              <span class="stat-value" id="statsTotalCount">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">stars</span></div>
+            <div class="stat-info">
+              <span class="stat-label">Green Points Generated</span>
+              <span class="stat-value" id="statsPointsIssued">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon"><span class="material-icons-outlined">restore_from_trash</span></div>
+            <div class="stat-info">
+              <span class="stat-label">Scrap Saved</span>
+              <span class="stat-value">100% Verified</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Search, Filtering, Controls -->
+        <div class="gallery-controls animate-slide-up" style="animation-delay: 150ms;">
+          <div class="filter-chips" id="galleryFilterChips">
+            <button class="chip active" data-category="all">All Items</button>
+            <button class="chip" data-category="decor">Home Decor</button>
+            <button class="chip" data-category="fashion">Fashion</button>
+            <button class="chip" data-category="accessories">Accessories</button>
+            <button class="chip" data-category="art">Art</button>
+          </div>
+          
+          <div class="gallery-sort">
+            <label for="gallerySortSelect">Sort By:</label>
+            <select id="gallerySortSelect" class="sort-select">
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="gallery-grid-wrapper animate-slide-up" style="animation-delay: 200ms;">
+          <!-- Loading State -->
+          <div id="galleryLoading" class="loading-state">
+            <div class="spinner"></div>
+            <p>Loading the gallery of transformations...</p>
+          </div>
+
+          <!-- Error State -->
+          <div id="galleryError" class="error-state" style="display: none;">
+            <span class="material-icons-outlined error-icon">error_outline</span>
+            <h3>Failed to Load Gallery</h3>
+            <p id="galleryErrorMessage">Something went wrong while fetching data. Please try again later.</p>
+            <button id="galleryRetryBtn" class="btn btn-secondary">Retry</button>
+          </div>
+
+          <!-- Empty State -->
+          <div id="galleryEmpty" class="empty-state" style="display: none;">
+            <span class="material-icons-outlined empty-icon">photo_library</span>
+            <h3>No Transformations Found</h3>
+            <p>We couldn't find any upcycled items with before-and-after photos matching your query.</p>
+          </div>
+
+          <!-- Dynamic Grid Container -->
+          <div id="galleryGrid" class="gallery-grid" style="display: none;">
+            <!-- Rendered dynamically via JS -->
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- INTERACTIVE BEFORE/AFTER SLIDER MODAL -->
+  <div id="sliderModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Upcycled Craft Details</h3>
+        <button id="modalCloseBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- Interactive Split Slider Container -->
+        <div class="comparison-slider-container">
+          <div class="comparison-img-wrapper before-img-wrapper">
+            <img id="sliderBeforeImg" src="" alt="Original Waste material">
+            <span class="slider-badge slider-badge-before">Original Scrap</span>
+          </div>
+          <div class="comparison-img-wrapper after-img-wrapper" id="sliderAfterWrapper">
+            <img id="sliderAfterImg" src="" alt="Upcycled final product">
+            <span class="slider-badge slider-badge-after">Upcycled Product</span>
+          </div>
+          <div class="comparison-slider-handle" id="sliderHandle">
+            <div class="slider-arrow-left">&#9664;</div>
+            <div class="slider-bar"></div>
+            <div class="slider-arrow-right">&#9654;</div>
+          </div>
+        </div>
+
+        <!-- Product narrative & details -->
+        <div class="modal-details">
+          <div class="modal-details-header">
+            <div class="modal-creator-info">
+              <span class="modal-creator-label">Crafted By</span>
+              <span class="modal-creator-name" id="modalCreatorName">Creator Name</span>
+            </div>
+            <div class="modal-price" id="modalPrice">$0.00</div>
+          </div>
+          
+          <div class="modal-narrative-section">
+            <h4><span class="material-icons-outlined" style="vertical-align: middle; margin-right: 4px; font-size:18px;">history_edu</span> The Upcycling Journey</h4>
+            <blockquote id="modalNarrativeText" class="modal-blockquote">
+              Story Narrative description here...
+            </blockquote>
+          </div>
+          
+          <div class="modal-product-desc-section">
+            <h4>Product Description</h4>
+            <p id="modalDescriptionText">Description details here...</p>
+          </div>
+
+          <div class="modal-meta-grid">
+            <div class="meta-item">
+              <span class="material-icons-outlined meta-icon">inventory_2</span>
+              <div>
+                <div class="meta-val" id="modalStock">0</div>
+                <div class="meta-lbl">Available Stock</div>
+              </div>
+            </div>
+            <div class="meta-item">
+              <span class="material-icons-outlined meta-icon">star_rate</span>
+              <div>
+                <div class="meta-val">+30</div>
+                <div class="meta-lbl">Green Points Value</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/gallery.js" defer></script>
+</body>
+</html>
