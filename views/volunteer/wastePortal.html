@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Waste Portal — WASTE2WORTH</title>
+  <meta name="description" content="Log collected waste from neighbourhood cleanup drives and manage community waste records.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Tab Navigation ────────────────────────────────── */
+    .tab-nav {
+      display: flex;
+      gap: 4px;
+      background: var(--color-bg-body);
+      border-radius: var(--radius-lg);
+      padding: 4px;
+      margin-bottom: var(--space-lg);
+      border: 1px solid var(--color-border);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px var(--space-md);
+      border: none;
+      background: transparent;
+      border-radius: var(--radius-md);
+      font-family: var(--font-family);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      background: var(--color-bg-card);
+      color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .tab-btn:hover:not(.active) { color: var(--color-primary); background: rgba(46,125,50,.06); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Status chips ──────────────────────────────────── */
+    .status-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 600; }
+    .status-pill[data-status="Pending"]  { background: var(--color-accent-amber-bg); color: var(--color-accent-amber); }
+    .status-pill[data-status="Verified"] { background: var(--color-primary-bg);      color: var(--color-primary); }
+    .status-pill[data-status="Claimed"]  { background: var(--color-status-sold);     color: var(--color-status-sold-text); }
+    .status-pill[data-status="Upcoming"] { background: var(--color-accent-blue-bg);  color: var(--color-accent-blue); }
+    .status-pill[data-status="Active"]   { background: var(--color-primary-bg);      color: var(--color-primary); }
+    .status-pill[data-status="Completed"]{ background: var(--color-status-sold);     color: var(--color-status-sold-text); }
+
+    /* ── Drive card grid ───────────────────────────────── */
+    .drive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-md); }
+    .drive-card { background: var(--color-bg-card); border-radius: var(--radius-md); padding: var(--space-lg); border: 1px solid var(--color-border); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition-base), transform var(--transition-base); }
+    .drive-card:hover { box-shadow: var(--shadow-elevated); transform: translateY(-2px); }
+    .drive-card-title { font-weight: 600; font-size: 15px; margin-bottom: 6px; color: var(--color-text-primary); }
+    .drive-card-meta  { font-size: 13px; color: var(--color-text-secondary); display: flex; flex-direction: column; gap: 4px; margin-bottom: var(--space-md); }
+    .drive-card-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Log card ──────────────────────────────────────── */
+    .log-card { display: flex; align-items: flex-start; gap: var(--space-md); background: var(--color-bg-card); border-radius: var(--radius-md); padding: var(--space-md); border: 1px solid var(--color-border); margin-bottom: var(--space-sm); box-shadow: var(--shadow-sm); transition: box-shadow var(--transition-base); }
+    .log-card:hover { box-shadow: var(--shadow-elevated); }
+    .log-thumb { width: 64px; height: 64px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; }
+    .log-thumb-placeholder { width: 64px; height: 64px; border-radius: var(--radius-sm); background: var(--color-bg-body); display: flex; align-items: center; justify-content: center; color: var(--color-text-muted); flex-shrink: 0; }
+    .log-info { flex: 1; min-width: 0; }
+    .log-title { font-weight: 600; font-size: 14px; margin-bottom: 2px; }
+    .log-meta  { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+
+    /* ── Drive filter chips ────────────────────────────── */
+    .filter-row { display: flex; gap: var(--space-sm); flex-wrap: wrap; margin-bottom: var(--space-md); }
+    .filter-chip { padding: 6px 14px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 500; border: 1px solid var(--color-border); background: var(--color-bg-card); color: var(--color-text-secondary); cursor: pointer; transition: all var(--transition-fast); }
+    .filter-chip.active, .filter-chip:hover { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+    .form-textarea { width: 100%; padding: 10px var(--space-md); border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-family: var(--font-family); font-size: 14px; color: var(--color-text-primary); resize: vertical; min-height: 80px; outline: none; transition: border-color var(--transition-fast); }
+    .form-textarea:focus { border-color: var(--color-primary-light); box-shadow: 0 0 0 3px rgba(76,175,80,.15); }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="material-icons-outlined">eco</span> WASTE2WORTH
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard/volunteer/waste-portal" class="nav-item active">
+        <span class="material-icons-outlined">recycling</span> Waste Portal
+      </a>
+      <a href="/dashboard/volunteer/product-story" class="nav-item">
+        <span class="material-icons-outlined">eco</span> Product Stories
+      </a>
+      <div class="nav-section-title">Account</div>
+      <a href="#" id="downloadCertBtn" class="nav-item">
+        <span class="material-icons-outlined">card_membership</span> Certificate
+      </a>
+      <a href="#" id="logoutBtn" class="nav-item">
+        <span class="material-icons-outlined">logout</span> Logout
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">&copy; 2026 WASTE2WORTH</div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    
+    <header class="header">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <div class="header-search">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" placeholder="Search waste logs..." aria-label="Search" id="wasteLogSearch">
+      </div>
+      <div class="header-user">
+        <div class="green-points-badge">
+          <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+          <span class="green-points-value">0</span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">User</span>
+          <span class="user-role">Role</span>
+        </div>
+        <div class="user-avatar">U</div>
+      </div>
+    </header>
+
+    
+    <main class="main-content">
+      <div class="page-header animate-fade-in">
+        <h1 class="page-title">Community Waste Sourcing Portal</h1>
+        <p class="page-subtitle">Log waste collected during cleanup drives and help the community source materials.</p>
+      </div>
+
+      
+      <div class="stats-grid animate-slide-up" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="stat-card">
+          <div class="flex-between mb-sm">
+            <span class="stat-label">My Total Logs</span>
+            <div class="stat-icon green"><span class="material-icons-outlined">inventory_2</span></div>
+          </div>
+          <div class="stat-value" id="statMyLogs">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex-between mb-sm">
+            <span class="stat-label">Kg Collected</span>
+            <div class="stat-icon amber"><span class="material-icons-outlined">scale</span></div>
+          </div>
+          <div class="stat-value" id="statKg">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="flex-between mb-sm">
+            <span class="stat-label">Claimed by Community</span>
+            <div class="stat-icon blue"><span class="material-icons-outlined">handshake</span></div>
+          </div>
+          <div class="stat-value" id="statClaimed">0</div>
+        </div>
+      </div>
+
+      
+      <div class="tab-nav animate-slide-up">
+        <button class="tab-btn active" data-tab="log-waste" id="tabLogWaste">
+          <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> Log Waste
+        </button>
+        <button class="tab-btn" data-tab="my-logs" id="tabMyLogs">
+          <span class="material-icons-outlined" style="font-size:18px;">list_alt</span> My Logs
+        </button>
+        <button class="tab-btn" data-tab="incoming-requests" id="tabIncomingRequests">
+          <span class="material-icons-outlined" style="font-size:18px;">handshake</span> Claim Requests
+        </button>
+        <button class="tab-btn" data-tab="drives" id="tabDrives">
+          <span class="material-icons-outlined" style="font-size:18px;">directions_walk</span> Drives
+        </button>
+      </div>
+
+      
+      <div class="tab-panel active" id="panelLogWaste">
+        <div class="form-row">
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Log Collected Waste</h2>
+            </div>
+            <form id="wasteLogForm" enctype="multipart/form-data">
+              <div class="form-group">
+                <label class="form-label" for="wlCategory">Waste Category</label>
+                <select id="wlCategory" name="category" class="form-select" required>
+                  <option value="" disabled selected>Select category...</option>
+                  <option value="Plastic">Plastic</option>
+                  <option value="Metal">Metal</option>
+                  <option value="Paper">Paper</option>
+                  <option value="Glass">Glass</option>
+                  <option value="E-Waste">E-Waste</option>
+                  <option value="Textile">Textile</option>
+                  <option value="Organic">Organic</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="wlWeight">Weight (kg)</label>
+                <input type="number" id="wlWeight" name="weightKg" step="0.01" min="0.01" class="form-input" placeholder="e.g., 5.5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="wlDrive">Linked Drive (Optional)</label>
+                <select id="wlDrive" name="driveId" class="form-select">
+                  <option value="">— No drive (ad-hoc collection) —</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="wlNotes">Notes / Description (Optional)</label>
+                <textarea id="wlNotes" name="notes" class="form-textarea" placeholder="e.g., Collected from Gulshan park, mostly PET bottles..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Photo (Optional)</label>
+                <input type="file" id="wastePhoto" name="photo" accept="image/*" class="hidden">
+                <div class="upload-zone" id="wasteUploadZone">
+                  <div class="upload-preview" id="wastePhotoPreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon">cloud_upload</span>
+                    <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+                    <div class="form-hint">PNG, JPG up to 5 MB</div>
+                  </div>
+                </div>
+              </div>
+              <button type="submit" id="wasteLogSubmitBtn" class="btn btn-primary-gradient btn-block">
+                <span class="material-icons-outlined">add_circle</span> Submit Waste Log
+              </button>
+            </form>
+          </div>
+
+          <div class="card animate-slide-up">
+            <div class="card-header" style="padding-bottom:0;">
+              <h2 class="card-title">Points Guide</h2>
+            </div>
+            <div style="padding:var(--space-lg);">
+              <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-md);">Green Points are automatically calculated from weight &amp; category when you log waste.</p>
+              <table class="data-table" style="font-size:13px;">
+                <thead><tr><th>Category</th><th>Multiplier</th></tr></thead>
+                <tbody>
+                  <tr><td>E-Waste</td><td style="color:var(--color-primary);font-weight:600;">×2.0 / kg</td></tr>
+                  <tr><td>Plastic</td><td style="color:var(--color-primary);font-weight:600;">×1.5 / kg</td></tr>
+                  <tr><td>Metal / Paper / Glass</td><td style="color:var(--color-primary);font-weight:600;">×1.0 / kg</td></tr>
+                  <tr><td>Organic</td><td style="color:var(--color-text-secondary);">×0.5 / kg</td></tr>
+                </tbody>
+              </table>
+              <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--color-primary-dark);">
+                <strong>Bonus:</strong> Earn +5 extra points each time a citizen claims waste you logged!
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div class="tab-panel" id="panelMyLogs">
+        <div class="card animate-slide-up">
+          <div class="card-header" style="flex-wrap:wrap;gap:var(--space-sm);">
+            <h2 class="card-title">My Waste Logs</h2>
+            <div class="filter-row" style="margin:0;">
+              <button class="filter-chip active" data-logfilter="all">All</button>
+              <button class="filter-chip" data-logfilter="Pending">Pending</button>
+              <button class="filter-chip" data-logfilter="Verified">Verified</button>
+              <button class="filter-chip" data-logfilter="Claimed">Claimed</button>
+            </div>
+          </div>
+          <div style="padding:var(--space-md);">
+            <div id="myLogsContainer">
+              <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      
+      <div class="tab-panel" id="panelDrives">
+        <div class="form-row">
+          
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Create a Cleanup Drive</h2>
+            </div>
+            <form id="driveForm">
+              <div class="form-group">
+                <label class="form-label" for="driveTitle">Drive Name</label>
+                <input type="text" id="driveTitle" name="title" class="form-input" placeholder="e.g., Gulshan Park Cleanup" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="driveLocation">Location</label>
+                <input type="text" id="driveLocation" name="location" class="form-input" placeholder="e.g., Gulshan-1, Dhaka" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="driveDate">Date</label>
+                <input type="date" id="driveDate" name="date" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="driveCap">Max Participants</label>
+                <input type="number" id="driveCap" name="participantCap" class="form-input" min="1" placeholder="e.g., 20" required>
+              </div>
+              <button type="submit" id="driveSubmitBtn" class="btn btn-primary-gradient btn-block">
+                <span class="material-icons-outlined">add_location</span> Create Drive
+              </button>
+            </form>
+          </div>
+
+          
+          <div class="card animate-slide-up">
+            <div class="card-header" style="flex-wrap:wrap;gap:var(--space-sm);">
+              <h2 class="card-title">Upcoming Drives</h2>
+              <div class="filter-row" style="margin:0;">
+                <button class="filter-chip active" data-drivefilter="all">All</button>
+                <button class="filter-chip" data-drivefilter="upcoming">Upcoming</button>
+                <button class="filter-chip" data-drivefilter="past">Past</button>
+              </div>
+            </div>
+            <div style="padding:var(--space-md);">
+              <div class="drive-grid" id="drivesContainer">
+                <div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>
+              </div>
+            </div>
+          </div>
+      </div>
+
+      
+      <div class="tab-panel" id="panelIncomingRequests">
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Incoming Claim Requests</h2>
+          </div>
+          <div style="padding:var(--space-md);">
+            <div id="incomingRequestsContainer">
+              <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+<script src="/js/app.js" defer></script>
+</body>
+</html>
