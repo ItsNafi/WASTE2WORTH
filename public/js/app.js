@@ -865,4 +865,179 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (currentPath === '/dashboard/volunteer/product-story') {
+
+    const storyForm = document.getElementById('productStoryForm');
+    if (storyForm) {
+      storyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(storyForm);
+        const btn = storyForm.querySelector('button[type="submit"]');
+        try {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Adding...';
+          await apiCall('/api/crafts', {
+            method: 'POST',
+            body: formData
+          });
+          showToast('Product Story added successfully!', 'success');
+          storyForm.reset();
+          loadProductStories();
+          loadUserInfo();
+        } catch (err) {
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = 'Add Product Story';
+        }
+      });
+    }
+
+    const loadProductStories = async () => {
+      const grid = document.getElementById('storiesGrid');
+      if (!grid) return;
+      grid.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+
+      try {
+        const crafts = await apiCall('/api/crafts');
+        const filtered = crafts.filter(c => c.origin || c.materialsUsed || c.transformation || c.storyNarrative || c.title);
+
+        if (filtered.length === 0) {
+          grid.innerHTML = `
+            <div class="empty-state" style="grid-column: 1/-1;">
+              <span class="material-icons-outlined empty-state-icon">eco</span>
+              <p class="empty-state-text">No product stories yet. Add one above!</p>
+            </div>`;
+          return;
+        }
+
+        grid.innerHTML = filtered.map(item => {
+          const mockReviews = [
+            { user: 'Anon Buyer', text: 'This item is beautiful, highly recommend!' },
+            { user: 'Eco Friend', text: 'Amazing environmental impact! Let\'s save Dhaka!' }
+          ];
+
+          return `
+            <div class="story-card animate-fade-in" id="storyCard-${item.craftId}">
+              <div class="story-card-header">
+                <h3>🌱 ${escapeHTML(item.title || 'Product Story')}</h3>
+                <span class="story-card-badge">
+                  <span class="material-icons-outlined" style="font-size:12px;">sell</span>
+                  ৳${parseFloat(item.price).toFixed(2)}
+                </span>
+              </div>
+
+              ${item.afterPhotoUrl || item.beforePhotoUrl ? `
+              <div style="width:100%;height:240px;overflow:hidden;background:#f0f4f0;">
+                <img src="${item.afterPhotoUrl || item.beforePhotoUrl}" alt="Product picture"
+                     style="width:100%;height:100%;object-fit:cover;">
+              </div>` : `
+              <div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:#f0f4f0;color:#94a3b8;">
+                <span class="material-icons-outlined" style="font-size:48px;">image_not_supported</span>
+              </div>`}
+
+              <div class="story-card-body">
+                ${item.description ? `
+                <div class="story-section-block">
+                  <span class="story-label-title">Description:</span>
+                  <span class="story-value-text">${escapeHTML(item.description)}</span>
+                </div>
+                <div class="story-divider"></div>` : ''}
+
+                <div class="story-section-block">
+                  <span class="story-label-title">Origin:</span>
+                  <span class="story-value-text">${escapeHTML(item.origin || 'Collected from Community Campaign')}</span>
+                </div>
+
+                <div class="story-section-block">
+                  <span class="story-label-title">Materials Used:</span>
+                  <span class="story-value-text">${escapeHTML(item.materialsUsed || 'Recycled materials')}</span>
+                </div>
+
+                <div class="story-section-block">
+                  <span class="story-label-title">Created By:</span>
+                  <span class="story-value-text" style="font-weight:600;color:var(--color-primary-dark);">${escapeHTML(item.creatorName || '—')}</span>
+                </div>
+
+                <div class="story-divider"></div>
+
+                <div class="story-section-block">
+                  <span class="story-label-title">Transformation:</span>
+                  <span class="story-value-text" style="font-style:italic;white-space:pre-line;">${escapeHTML(item.transformation || item.storyNarrative || 'N/A')}</span>
+                </div>
+
+                <div class="story-divider"></div>
+
+                <div class="story-section-block">
+                  <span class="story-label-title">Environmental Impact:</span>
+                  <ul class="story-impact-list">
+                    <li class="story-impact-item">
+                      <span class="material-icons-outlined icon">check_circle</span>
+                      <span>${item.unitsRecycled || 0} units recycled</span>
+                    </li>
+                    <li class="story-impact-item">
+                      <span class="material-icons-outlined icon">check_circle</span>
+                      <span>${item.wasteKgDiverted ? parseFloat(item.wasteKgDiverted).toFixed(1) : '0.0'} kg waste diverted</span>
+                    </li>
+                    ${item.environmentalNote ? `
+                    <li class="story-impact-item">
+                      <span class="material-icons-outlined icon">check_circle</span>
+                      <span>${escapeHTML(item.environmentalNote)}</span>
+                    </li>` : ''}
+                  </ul>
+                </div>
+              </div>
+
+              <div class="story-reviews-box">
+                <div class="story-reviews-header">
+                  <span>Customer Reviews</span>
+                  <span style="font-size:0.75rem;color:var(--color-primary);font-weight:600;text-transform:none;cursor:pointer;"
+                        onclick="addMockReview(${item.craftId})">Write Review</span>
+                </div>
+                <div id="reviewsList-${item.craftId}">
+                  ${mockReviews.map(r => `
+                    <div class="story-review-item">
+                      <span class="story-review-user">${escapeHTML(r.user)}</span>
+                      <span>${escapeHTML(r.text)}</span>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `<div class="form-error">Failed to load product stories.</div>`;
+      }
+    };
+
+    window.addMockReview = (craftId) => {
+      const text = prompt('Write a review text:');
+      if (!text) return;
+      const reviewsList = document.getElementById(`reviewsList-${craftId}`);
+      if (!reviewsList) return;
+      const user = prompt('Enter your name:', 'Eco Volunteer') || 'Eco Volunteer';
+      const reviewDiv = document.createElement('div');
+      reviewDiv.className = 'story-review-item';
+      reviewDiv.innerHTML = `
+        <span class="story-review-user">${escapeHTML(user)}</span>
+        <span>${escapeHTML(text)}</span>
+      `;
+      reviewsList.appendChild(reviewDiv);
+      showToast('Review submitted successfully!', 'success');
+    };
+
+    const searchInput = document.getElementById('storySearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const query = searchInput.value.toLowerCase();
+        document.querySelectorAll('.story-card').forEach(card => {
+          card.style.display = card.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
+        });
+      });
+    }
+
+    loadUserInfo();
+    loadProductStories();
+  }
+
 });
