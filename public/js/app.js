@@ -238,6 +238,12 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (user.role === 'Volunteer') route = '/dashboard/volunteer';
         dashboardLink.href = route;
       }
+
+      const creatorProfileLink = document.getElementById('navCreatorProfileLink');
+      if (creatorProfileLink && user.role === 'Creator') {
+        creatorProfileLink.href = `/creator-profile/${user.id}`;
+        creatorProfileLink.style.display = 'flex';
+      }
       
       document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name);
       document.querySelectorAll('.user-role').forEach(el => el.textContent = user.role);
@@ -248,6 +254,71 @@ document.addEventListener('DOMContentLoaded', () => {
       
       const pointsStat = document.getElementById('statPoints');
       if (pointsStat) pointsStat.textContent = user.greenPoints || 0;
+      
+      // Fetch and render notifications
+      try {
+        const notifs = await apiCall('/api/notifications', { ignoreAuthError: true });
+        if (notifs) {
+          const unreadCount = notifs.filter(n => !n.isRead).length;
+          
+          let notifDropdown = document.getElementById('notifDropdown');
+          if (!notifDropdown) {
+            notifDropdown = document.createElement('div');
+            notifDropdown.id = 'notifDropdown';
+            notifDropdown.style.cssText = 'position:relative; margin-right: 15px; cursor: pointer; display: flex; align-items: center;';
+            notifDropdown.innerHTML = `
+              <span class="material-icons-outlined" style="font-size:24px; color: var(--color-text-secondary);">notifications</span>
+              <span id="notifBadge" style="display:none; position:absolute; top:-5px; right:-5px; background:var(--color-accent-amber); color:white; font-size:10px; font-weight:bold; padding:2px 5px; border-radius:10px;">0</span>
+              <div id="notifList" style="display:none; position:absolute; top:35px; right:0; width:300px; background:white; box-shadow:var(--shadow-card); border-radius:var(--radius-md); border:1px solid var(--color-border); z-index:100; max-height:300px; overflow-y:auto;">
+              </div>
+            `;
+            headerUser.insertBefore(notifDropdown, headerUser.firstChild);
+            
+            notifDropdown.addEventListener('click', async (e) => {
+              const list = document.getElementById('notifList');
+              if (list.style.display === 'none') {
+                list.style.display = 'block';
+                // Mark as read
+                if (unreadCount > 0) {
+                  await apiCall('/api/notifications/mark-read', { method: 'POST', ignoreAuthError: true });
+                  document.getElementById('notifBadge').style.display = 'none';
+                }
+              } else {
+                list.style.display = 'none';
+              }
+            });
+            
+            // Close dropdown if clicked outside
+            document.addEventListener('click', (e) => {
+              if (!notifDropdown.contains(e.target)) {
+                document.getElementById('notifList').style.display = 'none';
+              }
+            });
+          }
+          
+          const badge = document.getElementById('notifBadge');
+          if (unreadCount > 0) {
+            badge.textContent = unreadCount;
+            badge.style.display = 'block';
+          } else {
+            badge.style.display = 'none';
+          }
+          
+          const list = document.getElementById('notifList');
+          if (notifs.length === 0) {
+            list.innerHTML = '<div style="padding:15px; text-align:center; color:var(--color-text-muted); font-size:0.9rem;">No notifications</div>';
+          } else {
+            list.innerHTML = notifs.map(n => `
+              <div style="padding:12px 15px; border-bottom:1px solid var(--color-border-light); background:${n.isRead ? 'transparent' : 'rgba(var(--color-primary-rgb), 0.05)'};">
+                <div style="font-size:0.9rem; color:var(--color-text-primary); margin-bottom:4px;">${escapeHTML(n.message)}</div>
+                <div style="font-size:0.75rem; color:var(--color-text-muted);">${formatDate(n.createdAt)}</div>
+              </div>
+            `).join('');
+          }
+        }
+      } catch (err) {
+        console.warn("Could not load notifications", err);
+      }
       
     } catch (err) {
       console.warn("User not logged in or failed to load user info:", err.message);
@@ -417,9 +488,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
     
+    const loadPriceDirectory = async () => {
+      const tbody = document.getElementById('citizenPriceDirectory');
+      if (!tbody) return;
+      try {
+        const prices = await apiCall('/api/scrap/prices');
+        tbody.innerHTML = prices.map(p => `
+          <tr>
+            <td style="font-weight: 600; color: var(--color-primary);">${escapeHTML(p.categoryName)}</td>
+            <td style="font-weight: 500;">$${parseFloat(p.pricePerKg).toFixed(2)} / kg</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="2" class="text-center form-error">Failed to load price directory.</td></tr>`;
+      }
+    };
+    
     // Initial loads
     loadUserInfo();
     loadMyListings();
+    loadPriceDirectory();
   }
 
   // ============================================================
@@ -515,8 +603,81 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    window.purchaseVolunteerWaste = async (registrationId, weight) => {
+      const category = prompt('Specify waste category to buy (e.g. Plastic, Metal, Paper, Glass, E-Waste):', 'Plastic');
+      if (!category) return;
+      
+      try {
+        await apiCall(`/api/payments/purchase-campaign-waste/${registrationId}`, {
+          method: 'POST',
+          body: JSON.stringify({ category })
+        });
+        showToast('Purchase successful! Funds routed to campaign fund.', 'success');
+        loadVolunteerWaste();
+        loadCampaignFundBalance();
+        loadUserInfo();
+      } catch (err) {}
+    };
+
+    const loadCampaignFundBalance = async () => {
+      const el = document.getElementById('statCampaignFund');
+      if (!el) return;
+      try {
+        const data = await apiCall('/api/payments/campaign-fund');
+        el.textContent = `$${data.balance}`;
+      } catch (err) {}
+    };
+
+    const loadVolunteerWaste = async () => {
+      const tbody = document.getElementById('volunteerWasteBoard');
+      if (!tbody) return;
+      
+      try {
+        const data = await apiCall('/api/payments/attended-registrations');
+        const withWaste = data.filter(r => parseFloat(r.wasteCollectedKg) > 0);
+        
+        if (withWaste.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="padding:20px;color:var(--color-text-muted);">No campaign waste available for purchase.</td></tr>`;
+          return;
+        }
+        
+        tbody.innerHTML = withWaste.map(item => `
+          <tr class="animate-fade-in">
+            <td><div style="font-weight:500;">${escapeHTML(item.campaignTitle)}</div></td>
+            <td>${escapeHTML(item.volunteerName)}</td>
+            <td style="font-weight:600;color:var(--color-primary);">${item.wasteCollectedKg} kg</td>
+            <td><span class="status-pill" data-status="Available">Available</span></td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="purchaseVolunteerWaste(${item.registrationId}, ${item.wasteCollectedKg})">Buy Waste</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center form-error">Failed to load campaign waste data.</td></tr>`;
+      }
+    };
+
+    const loadBhangariPriceDirectory = async () => {
+      const tbody = document.getElementById('bhangariPriceDirectory');
+      if (!tbody) return;
+      try {
+        const prices = await apiCall('/api/scrap/prices');
+        tbody.innerHTML = prices.map(p => `
+          <tr>
+            <td style="font-weight: 600; color: var(--color-primary);">${escapeHTML(p.categoryName)}</td>
+            <td style="font-weight: 500;">$${parseFloat(p.pricePerKg).toFixed(2)} / kg</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="2" class="text-center form-error">Failed to load price directory.</td></tr>`;
+      }
+    };
+
     loadUserInfo();
     loadBhangariBoard();
+    loadVolunteerWaste();
+    loadCampaignFundBalance();
+    loadBhangariPriceDirectory();
   }
 
   // ============================================================
@@ -619,43 +780,143 @@ document.addEventListener('DOMContentLoaded', () => {
   
   if (currentPath === '/storefront' || currentPath === '/storefront/') {
     
+    const storefrontGrid = document.getElementById('storefrontGrid');
+    let storefrontCrafts = [];
+
+    window.buyCraft = async (craftId, title, price, creatorName) => {
+      // Build a payment confirmation modal
+      const existing = document.getElementById('paymentModal');
+      if (existing) existing.remove();
+
+      const modal = document.createElement('div');
+      modal.id = 'paymentModal';
+      modal.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);
+        z-index:9999;display:flex;align-items:center;justify-content:center;
+        animation:fadeIn 200ms ease;
+      `;
+      modal.innerHTML = `
+        <div style="background:white;border-radius:16px;padding:32px;max-width:420px;width:90%;
+                    box-shadow:0 24px 60px rgba(0,0,0,0.2);animation:slideUp 250ms ease;">
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+            <div style="width:44px;height:44px;border-radius:50%;background:var(--color-primary-bg);
+                        color:var(--color-primary);display:flex;align-items:center;justify-content:center;">
+              <span class="material-icons-outlined">shopping_bag</span>
+            </div>
+            <div>
+              <div style="font-weight:700;font-size:1.1rem;color:var(--color-text-primary);">Confirm Purchase</div>
+              <div style="font-size:0.85rem;color:var(--color-text-secondary);">Secure checkout</div>
+            </div>
+          </div>
+          <div style="background:var(--color-border-light);border-radius:12px;padding:16px;margin-bottom:20px;">
+            <div style="font-weight:600;font-size:1rem;color:var(--color-text-primary);margin-bottom:4px;">${escapeHTML(title)}</div>
+            <div style="color:var(--color-text-secondary);font-size:0.9rem;">By ${escapeHTML(creatorName)}</div>
+            <div style="margin-top:12px;font-size:1.5rem;font-weight:800;color:var(--color-primary);">$${parseFloat(price).toFixed(2)}</div>
+          </div>
+          <p style="font-size:0.85rem;color:var(--color-text-secondary);margin-bottom:20px;">
+            🌱 Your purchase directly supports this artisan and awards you <strong>+10 Green Points</strong>.
+          </p>
+          <div style="display:flex;gap:10px;">
+            <button id="payConfirmBtn" class="btn btn-primary" style="flex:1;">
+              <span class="material-icons-outlined">payment</span> Pay Now
+            </button>
+            <button id="payCancelBtn" class="btn btn-ghost" style="flex:1;">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+
+      // Cancel
+      document.getElementById('payCancelBtn').addEventListener('click', () => modal.remove());
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+
+      // Confirm pay
+      document.getElementById('payConfirmBtn').addEventListener('click', async () => {
+        const btn = document.getElementById('payConfirmBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Processing...';
+        try {
+          await apiCall(`/api/payments/checkout/${craftId}`, { method: 'POST' });
+          modal.remove();
+          showToast(`✅ Purchase successful! +10 Green Points earned.`, 'success');
+          loadStorefront();
+          loadUserInfo();
+        } catch (err) {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons-outlined">payment</span> Pay Now';
+        }
+      });
+    };
+
+    const renderStorefront = (items) => {
+      if (!storefrontGrid) return;
+      if (items.length === 0) {
+        storefrontGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No crafts found for this category.</div>`;
+        return;
+      }
+
+      storefrontGrid.innerHTML = items.map(item => `
+        <div class="product-card animate-fade-in">
+          <div style="position:relative; overflow:hidden;" class="craft-img-container">
+            <img src="${item.afterPhotoUrl || '/api/placeholder/400/300'}" class="product-card-image" alt="${escapeHTML(item.title)}">
+            ${item.beforePhotoUrl ? `<div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); color:white; font-size:10px; padding:2px 8px; border-radius:10px; text-transform:uppercase;">Upcycled</div>` : ''}
+          </div>
+          <div class="product-card-body">
+            <h3 class="product-card-title">${escapeHTML(item.title)}</h3>
+            <div class="product-card-creator">By <a href="/creator-profile/${item.creatorId}" class="creator-link" style="color: var(--color-primary); font-weight: 600; text-decoration: none;">${escapeHTML(item.creatorName)}</a></div>
+            <div class="product-card-category" style="margin: 8px 0 0; color: var(--color-text-secondary); font-size: 0.95rem;">${escapeHTML(item.category || 'Uncategorized')}</div>
+            <div class="product-card-desc" style="margin-top:10px;">
+              ${escapeHTML(item.description || 'No description provided.')}
+            </div>
+            <div class="product-card-meta">
+              <div class="product-card-price">$${item.price}</div>
+              <div class="inventory-badge">${item.inventoryCount} in stock</div>
+            </div>
+            <div style="margin-top:16px;">
+              ${item.inventoryCount > 0 
+                ? `<button class="btn btn-primary btn-block btn-sm" onclick="buyCraft(${item.craftId}, '${escapeHTML(item.title).replace(/'/g,"\\'")}', ${item.price}, '${escapeHTML(item.creatorName).replace(/'/g,"\\'")}')">Buy Now</button>`
+                : `<button class="btn btn-ghost btn-block btn-sm" disabled>Out of Stock</button>`
+              }
+            </div>
+          </div>
+        </div>
+      `).join('');
+    };
+
+    const filterStorefront = (category) => {
+      if (!category || category === 'All') {
+        return renderStorefront(storefrontCrafts);
+      }
+
+      const filtered = storefrontCrafts.filter(item => item.category === category);
+      renderStorefront(filtered);
+    };
+
     const loadStorefront = async () => {
-      const grid = document.getElementById('storefrontGrid');
-      if(!grid) return;
+      if (!storefrontGrid) return;
       
       try {
         const crafts = await apiCall('/api/crafts');
+        storefrontCrafts = crafts;
         
         if (crafts.length === 0) {
-          grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No upcycled crafts available yet.</div>`;
+          storefrontGrid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No upcycled crafts available yet.</div>`;
           return;
         }
         
-        grid.innerHTML = crafts.map(item => `
-          <div class="product-card animate-fade-in">
-            <div style="position:relative; overflow:hidden;" class="craft-img-container">
-              <img src="${item.afterPhotoUrl || '/api/placeholder/400/300'}" class="product-card-image" alt="${escapeHTML(item.title)}">
-              ${item.beforePhotoUrl ? `<div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); color:white; font-size:10px; padding:2px 8px; border-radius:10px; text-transform:uppercase;">Upcycled</div>` : ''}
-            </div>
-            <div class="product-card-body">
-              <h3 class="product-card-title">${escapeHTML(item.title)}</h3>
-              <div class="product-card-creator">By ${escapeHTML(item.creatorName)}</div>
-              
-              <div class="product-card-desc">
-                ${escapeHTML(item.description || 'No description provided.')}
-              </div>
-              
-              <div class="product-card-meta">
-                <div class="product-card-price">$${item.price}</div>
-                <div class="inventory-badge">${item.inventoryCount} in stock</div>
-              </div>
-            </div>
-          </div>
-        `).join('');
+        filterStorefront('All');
       } catch (err) {
-        grid.innerHTML = `<div class="form-error">Failed to load storefront products.</div>`;
+        storefrontGrid.innerHTML = `<div class="form-error">Failed to load storefront products.</div>`;
       }
     };
+
+    document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        filterStorefront(chip.dataset.cat || 'All');
+      });
+    });
     
     loadStorefront();
     loadUserInfo(true);

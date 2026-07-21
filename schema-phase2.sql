@@ -3,6 +3,15 @@
 -- ============================================================
 USE waste2worth;
 
+-- Add craft category field so storefront filtering can work by category
+ALTER TABLE UpcycledCrafts
+  ADD COLUMN IF NOT EXISTS category VARCHAR(100) DEFAULT NULL;
+
+-- Backfill legacy crafts created before category tracking was fixed
+UPDATE UpcycledCrafts SET category = 'Fashion' WHERE craftId = 106 AND category IS NULL;
+UPDATE UpcycledCrafts SET category = 'Accessories' WHERE craftId = 107 AND category IS NULL;
+UPDATE UpcycledCrafts SET category = 'Home Decor' WHERE craftId = 108 AND category IS NULL;
+
 -- ============================================================
 -- CLEANUP CAMPAIGNS TABLE
 -- ============================================================
@@ -66,3 +75,20 @@ INSERT IGNORE INTO PriceDirectory (categoryName, pricePerKg) VALUES
 ('Textile', 4.00),
 ('Organic', 1.00),
 ('Other', 0.50);
+
+-- ============================================================
+-- RECYCLING HISTORY TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS RecyclingHistory (
+  historyId    INT AUTO_INCREMENT PRIMARY KEY,
+  creatorId    INT             NOT NULL,
+  craftId      INT             DEFAULT NULL,
+  eventDate    DATE            NOT NULL,
+  recycledKg   DECIMAL(10,2)   DEFAULT 0.00,
+  materials    VARCHAR(255)    DEFAULT NULL,
+  description  TEXT            DEFAULT NULL,
+  createdAt    TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (creatorId) REFERENCES Users(id) ON DELETE CASCADE,
+  FOREIGN KEY (craftId) REFERENCES UpcycledCrafts(craftId) ON DELETE SET NULL,
+  INDEX idx_recycling_creator (creatorId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

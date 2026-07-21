@@ -13,6 +13,9 @@ const campaignRoutes = require('./routes/campaignRoutes');
 const pollutionRoutes = require('./routes/pollutionRoutes');
 const adminRoutes    = require('./routes/adminRoutes');
 const rewardRoutes   = require('./routes/rewardRoutes');
+const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
 
@@ -56,6 +59,8 @@ app.get('/dashboard/volunteer', verifyToken, requirePageRole('Volunteer'), serve
 app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('admin/dashboard.html'));
 
 app.get('/storefront', serveView('storefront/crafts.html'));
+app.get('/creator-profile/:id', serveView('creator-profile.html'));
+app.get('/payments/transactions', verifyToken, serveView('payments/transactions.html'));
 
 /* ── API Routes ──────────────────────────────────────────── */
 app.use('/api/auth',      authRoutes);
@@ -67,6 +72,9 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/pollution', pollutionRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/rewards',   rewardRoutes);
+app.use('/api/history',   recyclingHistoryRoutes);
+app.use('/api/payments',  paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 /* ── Global Error Handler ────────────────────────────────── */
 app.use((err, req, res, next) => {

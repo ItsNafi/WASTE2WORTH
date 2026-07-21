@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS UpcycledCrafts (
   creatorId       INT             NOT NULL,
   title           VARCHAR(200)    NOT NULL,
   description     TEXT            DEFAULT NULL,
+  category        VARCHAR(100)    DEFAULT NULL,
   price           DECIMAL(10,2)   NOT NULL,
   inventoryCount  INT             DEFAULT 1,
   beforePhotoUrl  VARCHAR(255)    DEFAULT NULL,

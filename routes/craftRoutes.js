@@ -17,4 +17,7 @@ router.get('/:craftId', CraftController.getCraftById);
 // Creator creates a new craft listing
 router.post('/', verifyToken, requireRole('Creator'), uploadCraftPhotos, CraftController.createCraft);
 
+// Creator restocks a craft
+router.post('/:craftId/restock', verifyToken, requireRole('Creator'), CraftController.restockCraft);
+
 module.exports = router;

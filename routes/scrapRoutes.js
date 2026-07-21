@@ -17,4 +17,7 @@ router.get('/all', verifyToken, ScrapController.getAllListings);
 // Get available listings
 router.get('/available', verifyToken, ScrapController.getAvailableListings);
 
+// Get price directory
+router.get('/prices', verifyToken, ScrapController.getPriceDirectory);
+
 module.exports = router;
