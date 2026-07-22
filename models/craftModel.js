@@ -2,15 +2,16 @@ const pool = require('../config/db');
 
 const CraftModel = {
   /** Insert a new upcycled craft listing. */
-  async create({ creatorId, title, description, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative }) {
+  async create({ creatorId, title, description, category, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative }) {
     const [result] = await pool.execute(
       `INSERT INTO UpcycledCrafts
-         (creatorId, title, description, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+         (creatorId, title, description, category, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         creatorId,
         title,
         description  || null,
+        category || null,
         price,
         inventoryCount || 1,
         beforePhotoUrl || null,
@@ -20,7 +21,7 @@ const CraftModel = {
     );
     return {
       craftId: result.insertId,
-      creatorId, title, description, price,
+      creatorId, title, description, category: category || null, price,
       inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative
     };
   },

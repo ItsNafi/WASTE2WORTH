@@ -13,4 +13,7 @@ router.get('/:craftId', CraftController.getCraftById);
 
 router.post('/', verifyToken, uploadCraftPhotos, CraftController.createCraft);
 
+// Creator restocks a craft
+router.post('/:craftId/restock', verifyToken, requireRole('Creator'), CraftController.restockCraft);
+
 module.exports = router;

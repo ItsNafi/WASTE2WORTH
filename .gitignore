@@ -11,8 +11,6 @@ yarn-error.log*
 package-lock.json
 
 # App data
-public/uploads/
-uploads/
 *.sqlite
 *.db
 

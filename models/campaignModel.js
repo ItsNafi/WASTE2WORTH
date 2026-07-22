@@ -40,6 +40,29 @@ const CampaignModel = {
       "UPDATE CampaignRegistrations SET status = 'Attended', wasteCollectedKg = ? WHERE campaignId = ? AND volunteerId = ?",
       [wasteCollectedKg, campaignId, volunteerId]
     );
+  },
+
+  async findRegistrationById(registrationId) {
+    const [rows] = await pool.execute(
+      `SELECT cr.*, cc.title AS campaignTitle 
+       FROM CampaignRegistrations cr
+       JOIN CleanupCampaigns cc ON cr.campaignId = cc.campaignId
+       WHERE cr.registrationId = ?`,
+      [registrationId]
+    );
+    return rows[0] || null;
+  },
+
+  async findAttendedRegistrations() {
+    const [rows] = await pool.execute(
+      `SELECT cr.*, cc.title AS campaignTitle, u.name AS volunteerName 
+       FROM CampaignRegistrations cr
+       JOIN CleanupCampaigns cc ON cr.campaignId = cc.campaignId
+       JOIN Users u ON cr.volunteerId = u.id
+       WHERE cr.status = 'Attended'
+       ORDER BY cr.registeredAt DESC`
+    );
+    return rows;
   }
 };
 

@@ -81,6 +81,13 @@
             </div>
             <div class="stat-value" id="statPoints">0</div>
           </div>
+          <div class="stat-card">
+            <div class="flex-between mb-sm">
+              <span class="stat-label">Campaign Fund</span>
+              <div class="stat-icon blue"><span class="material-icons-outlined">payments</span></div>
+            </div>
+            <div class="stat-value" id="statCampaignFund">$0.00</div>
+          </div>
         </div>
 
         <div class="filter-chips animate-slide-up">
@@ -114,6 +121,60 @@
                 <tr>
                   <td colspan="7" class="text-center" style="padding: 40px;">
                     <div class="loading-spinner"><div class="spinner"></div></div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Scrap Buying Price Directory -->
+        <div class="card animate-slide-up" style="margin-top: 30px;">
+          <div class="card-header">
+            <h2 class="card-title">Scrap Buying Price Directory</h2>
+            <p style="margin: 4px 0 0 0; color: var(--color-text-secondary); font-size: 0.9rem;">
+              Reference rates you pay per kg when purchasing scrap from citizens.
+            </p>
+          </div>
+          <div class="table-responsive" style="padding: 20px;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Scrap Category</th>
+                  <th>Buying Rate (per Kg)</th>
+                </tr>
+              </thead>
+              <tbody id="bhangariPriceDirectory">
+                <tr>
+                  <td colspan="2" class="text-center" style="padding: 20px;">Loading scrap prices...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card animate-slide-up" style="margin-top: 30px;">
+          <div class="card-header">
+            <h2 class="card-title">Volunteer Campaign Collected Waste</h2>
+            <p style="margin: 4px 0 0 0; color: var(--color-text-secondary); font-size: 0.9rem;">
+              Purchase waste collected during cleanup campaigns to fund the Cleanup Campaign Fund.
+            </p>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Campaign Title</th>
+                  <th>Volunteer Name</th>
+                  <th>Waste Weight</th>
+                  <th>Status</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="volunteerWasteBoard">
+                <tr>
+                  <td colspan="5" class="text-center" style="padding: 40px; color: var(--color-text-muted);">
+                    Loading volunteer waste data...
                   </td>
                 </tr>
               </tbody>

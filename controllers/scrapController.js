@@ -1,5 +1,6 @@
 const ScrapModel = require('../models/scrapModel');
 const UserModel  = require('../models/userModel');
+const PriceDirectoryModel = require('../models/priceDirectoryModel');
 
 const ScrapController = {
   /** Citizen creates a new scrap listing. */
@@ -60,6 +61,16 @@ const ScrapController = {
       res.json(listings);
     } catch (err) {
       res.status(500).json({ error: 'Failed to fetch available listings' });
+    }
+  },
+
+  /** Get scrap category price directory. */
+  async getPriceDirectory(_req, res) {
+    try {
+      const prices = await PriceDirectoryModel.getAllPrices();
+      res.json(prices);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch price directory' });
     }
   }
 };
