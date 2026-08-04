@@ -9,10 +9,15 @@ USE waste2worth;
 CREATE TABLE IF NOT EXISTS CleanupCampaigns (
   campaignId        INT AUTO_INCREMENT PRIMARY KEY,
   title             VARCHAR(200)    NOT NULL,
+  description       TEXT            DEFAULT NULL,
   date              DATE            NOT NULL,
+  startTime         TIME            DEFAULT NULL,
+  endTime           TIME            DEFAULT NULL,
   boundaryZone      VARCHAR(255)    NOT NULL,
   participantCap    INT             NOT NULL,
   currentVolunteers INT             DEFAULT 0,
+  organizerName     VARCHAR(150)    DEFAULT NULL,
+  imageUrl           VARCHAR(255)    DEFAULT NULL,
   status            ENUM('Upcoming', 'Active', 'Completed') DEFAULT 'Upcoming',
   createdAt         TIMESTAMP       DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

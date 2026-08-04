@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/admin" class="nav-item active">
+          <span class="material-icons-outlined">admin_panel_settings</span> System Admin
+        </a>
+        <a href="#campaignManagement" class="nav-item">
+          <span class="material-icons-outlined">event</span> Cleanup Campaigns
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 Admin Portal</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search"></div>
+        <div class="header-user">
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">A</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Admin Command Center</h1>
+          <p class="page-subtitle">Manage campaigns, track pollution, and update global pricing.</p>
+        </div>
+
+        <div class="form-row animate-slide-up">
+          
+          <!-- Price Directory -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Global Price Directory</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Category</th>
+                    <th>Price/Kg ($)</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="priceDirectoryTbody">
+                  <tr><td colspan="3" class="text-center"><div class="spinner"></div></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Create Campaign Form -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title" id="campaignFormTitle">Launch New Campaign</h2>
+            </div>
+            <form id="adminCampaignForm" enctype="multipart/form-data">
+              <input type="hidden" id="campaignId">
+              <div class="form-group">
+                <label class="form-label" for="campaignTitle">Campaign Title</label>
+                <input type="text" id="campaignTitle" name="title" class="form-input" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="campaignDescription">Description</label>
+                <textarea id="campaignDescription" name="description" class="form-textarea" required></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="campaignZone">Location</label>
+                <input type="text" id="campaignZone" name="boundaryZone" class="form-input" required>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="campaignDate">Date</label>
+                  <input type="date" id="campaignDate" name="date" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="campaignCap">Maximum Volunteers</label>
+                  <input type="number" id="campaignCap" name="participantCap" class="form-input" min="1" value="50" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="campaignStartTime">Start Time</label>
+                  <input type="time" id="campaignStartTime" name="startTime" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="campaignEndTime">End Time</label>
+                  <input type="time" id="campaignEndTime" name="endTime" class="form-input" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label" for="campaignOrganizer">Organizer Name</label>
+                  <input type="text" id="campaignOrganizer" name="organizerName" class="form-input" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="campaignStatus">Status</label>
+                  <select id="campaignStatus" name="status" class="form-select" required>
+                    <option value="Upcoming">Upcoming</option>
+                    <option value="Active">Ongoing</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Campaign Image (Optional)</label>
+                <input type="file" id="campaignImage" name="image" accept="image/jpeg,image/png,image/webp" class="hidden">
+                <div class="upload-zone" id="campaignUploadZone">
+                  <div class="upload-preview" id="campaignImagePreview"></div>
+                  <div class="upload-content">
+                    <span class="material-icons-outlined upload-icon">add_a_photo</span>
+                    <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+                    <div class="form-hint">PNG, JPG or WebP up to 5MB</div>
+                  </div>
+                </div>
+              </div>
+              <div class="campaign-form-actions">
+                <button type="button" id="cancelCampaignEdit" class="btn btn-ghost hidden">Cancel Edit</button>
+                <button type="submit" id="campaignSubmitBtn" class="btn btn-primary-gradient">Launch Campaign</button>
+              </div>
+            </form>
+          </div>
+
+        </div>
+
+        <div class="card mt-lg animate-slide-up" id="campaignManagement">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Cleanup Campaign Management</h2>
+              <p class="card-subtitle">View, search, update, and manage weekly cleanup campaigns.</p>
+            </div>
+          </div>
+
+          <div class="campaign-toolbar">
+            <form id="campaignSearchForm" class="campaign-search">
+              <div class="header-search">
+                <span class="material-icons-outlined">search</span>
+                <input type="search" id="campaignSearch" placeholder="Search by title or location..." aria-label="Search campaigns">
+              </div>
+              <button type="submit" class="btn btn-primary btn-sm">Search</button>
+            </form>
+            <div class="filter-chips" id="campaignStatusFilters">
+              <button type="button" class="chip active" data-status="">All</button>
+              <button type="button" class="chip" data-status="Upcoming">Upcoming</button>
+              <button type="button" class="chip" data-status="Active">Ongoing</button>
+              <button type="button" class="chip" data-status="Completed">Completed</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Title</th>
+                  <th>Location</th>
+                  <th>Date</th>
+                  <th>Organizer</th>
+                  <th>Volunteers</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="campaignAdminTbody">
+                <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card mt-lg animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Reported Pollution Zones</h2>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Citizen</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody id="pollutionAdminTbody">
+                <tr><td colspan="5" class="text-center">No reports loaded.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>
