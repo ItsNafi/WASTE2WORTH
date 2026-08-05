@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complaint Management — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/admin" class="nav-item">
+          <span class="material-icons-outlined">admin_panel_settings</span> System Admin
+        </a>
+        <a href="/dashboard/admin/complaints" class="nav-item active">
+          <span class="material-icons-outlined">report_problem</span> Complaints
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-user" style="margin-left: auto;">
+          <div class="user-info">
+            <span class="user-name">Admin</span>
+            <span class="user-role">Admin</span>
+          </div>
+          <div class="user-avatar">A</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Crowdsourced Complaints</h1>
+          <p class="page-subtitle">Review reported pollution locations and track cleanup progress.</p>
+        </div>
+
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Pollution Reports</h2>
+              <p class="card-subtitle">Photos and locations submitted by citizens.</p>
+            </div>
+            <button type="button" id="refreshComplaintsBtn" class="btn btn-sm btn-primary">
+              <span class="material-icons-outlined">refresh</span> Refresh
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>Citizen</th>
+                  <th>Location</th>
+                  <th>Description</th>
+                  <th>Submitted</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="complaintsTbody">
+                <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/app.js" defer></script>
+  <script src="/js/adminComplaints.js" defer></script>
+</body>
+</html>
