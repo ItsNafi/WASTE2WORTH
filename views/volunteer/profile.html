@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Volunteer Profile — WASTE2WORTH</title>
+  <meta name="description" content="View and manage your volunteer profile on WASTE2WORTH.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Volunteer Profile Styles ── */
+    .profile-hero {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 60%, #388e3c 100%);
+      border-radius: 20px;
+      padding: 36px 36px 80px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 0;
+    }
+    .profile-hero::before {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.07) 0%, transparent 70%);
+      top: -60px; right: -60px;
+      border-radius: 50%;
+    }
+    .profile-hero-content {
+      position: relative; z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 24px;
+    }
+    .profile-avatar-large {
+      width: 80px; height: 80px;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+    .profile-hero-info { flex: 1; }
+    .profile-hero-info h1 { color: white; font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .profile-hero-info .hero-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+    .hero-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: rgba(255,255,255,0.8);
+      font-size: 0.875rem;
+    }
+    .hero-meta-item .material-icons-outlined { font-size: 16px; }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .status-pill.active {
+      background: rgba(76,175,80,0.2);
+      color: #a5d6a7;
+      border: 1.5px solid rgba(76,175,80,0.4);
+    }
+    .status-pill.inactive {
+      background: rgba(244,67,54,0.2);
+      color: #ef9a9a;
+      border: 1.5px solid rgba(244,67,54,0.3);
+    }
+    .status-pill .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .profile-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .btn-outline-white {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: 1.5px solid rgba(255,255,255,0.5);
+      border-radius: 10px;
+      color: white;
+      background: transparent;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-outline-white:hover { background: rgba(255,255,255,0.15); border-color: white; }
+    .btn-outline-white .material-icons-outlined { font-size: 18px; }
+
+    /* Profile card floated below hero */
+    .profile-main {
+      margin-top: -50px;
+      position: relative;
+      z-index: 2;
+    }
+    .profile-card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-elevated);
+      overflow: hidden;
+    }
+    .profile-tab-bar {
+      display: flex;
+      border-bottom: 1px solid var(--color-border);
+      padding: 0 24px;
+    }
+    .profile-tab {
+      padding: 16px 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      outline: none;
+      user-select: none;
+    }
+    .profile-tab .material-icons-outlined { font-size: 18px; }
+    .profile-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+    .profile-tab-content { padding: 28px 24px; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+    /* Info Grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .info-item label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      display: block;
+      margin-bottom: 6px;
+    }
+    .info-item .info-value {
+      font-size: 0.95rem;
+      color: var(--color-text-primary);
+      font-weight: 500;
+    }
+    .skills-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .skill-tag {
+      background: var(--color-primary-bg);
+      color: var(--color-primary-dark);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    .interest-tag {
+      background: var(--color-accent-amber-bg);
+      color: var(--color-accent-amber);
+      padding: 5px 12px;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+    /* Edit form inside profile */
+    .edit-form { display: none; }
+    .edit-form.visible { display: block; animation: fadeIn 0.3s ease; }
+    .view-mode { display: block; }
+    .view-mode.hidden { display: none; }
+    .edit-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) {
+      .edit-grid-2 { grid-template-columns: 1fr; }
+      .profile-hero-content { flex-direction: column; }
+    }
+    .edit-interests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .edit-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      transition: all 0.2s;
+      background: var(--color-bg-body);
+    }
+    .edit-chip input { display: none; }
+    .edit-chip:has(input:checked) {
+      border-color: var(--color-primary);
+      background: var(--color-primary-bg);
+      color: var(--color-primary-dark);
+      font-weight: 500;
+    }
+    .edit-avail-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .edit-avail-opt input { display: none; }
+    .edit-avail-opt label {
+      padding: 8px 16px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      transition: all 0.2s;
+    }
+    .edit-avail-opt input:checked + label {
+      border-color: var(--color-primary);
+      background: var(--color-primary-bg);
+      color: var(--color-primary-dark);
+      font-weight: 600;
+    }
+    .btn-save {
+      background: linear-gradient(135deg, #2e7d32, #43a047);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-save:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(46,125,50,0.35); }
+    .btn-cancel {
+      background: transparent;
+      border: 1.5px solid var(--color-border);
+      color: var(--color-text-secondary);
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-cancel:hover { border-color: var(--color-text-secondary); }
+    .no-profile-cta {
+      text-align: center;
+      padding: 60px 24px;
+    }
+    .no-profile-cta .material-icons-outlined { font-size: 56px; color: var(--color-text-muted); }
+    .no-profile-cta h2 { color: var(--color-text-secondary); margin: 12px 0 8px; font-size: 1.2rem; }
+    .no-profile-cta p { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/volunteer/waste-portal" class="nav-item">
+          <span class="material-icons-outlined">recycling</span> Waste Portal
+        </a>
+        <a href="/dashboard/volunteer/product-story" class="nav-item">
+          <span class="material-icons-outlined">eco</span> Product Stories
+        </a>
+        <div class="nav-section-title">My Profile</div>
+        <a href="/volunteer/profile" class="nav-item active">
+          <span class="material-icons-outlined">manage_accounts</span> Volunteer Profile
+        </a>
+        <a href="/volunteer/register" class="nav-item">
+          <span class="material-icons-outlined">volunteer_activism</span> Register / Update
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search"></div>
+        <div class="header-user" id="headerUser">
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Role</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+
+        <!-- Shown when profile exists -->
+        <div id="profileSection" style="display:none;">
+          <div class="profile-hero animate-fade-in">
+            <div class="profile-hero-content">
+              <div class="profile-avatar-large" id="heroAvatar">?</div>
+              <div class="profile-hero-info">
+                <h1 id="heroName">Loading…</h1>
+                <div class="hero-meta">
+                  <div class="hero-meta-item">
+                    <span class="material-icons-outlined">email</span>
+                    <span id="heroEmail"></span>
+                  </div>
+                  <div class="hero-meta-item">
+                    <span class="material-icons-outlined">phone</span>
+                    <span id="heroPhone"></span>
+                  </div>
+                  <div class="hero-meta-item">
+                    <span class="material-icons-outlined">schedule</span>
+                    <span id="heroAvailability"></span>
+                  </div>
+                </div>
+                <div class="profile-actions">
+                  <button id="toggleStatusBtn" class="status-pill active">
+                    <span class="status-dot"></span>
+                    <span id="statusLabel">Active</span>
+                  </button>
+                  <button id="editProfileBtn" class="btn-outline-white">
+                    <span class="material-icons-outlined">edit</span> Edit Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-main animate-slide-up">
+            <div class="profile-card">
+              <div class="profile-tab-bar">
+                <button class="profile-tab active" data-tab="overview">
+                  <span class="material-icons-outlined">person</span> Overview
+                </button>
+                <button class="profile-tab" data-tab="edit">
+                  <span class="material-icons-outlined">edit</span> Edit Profile
+                </button>
+              </div>
+
+              <div class="profile-tab-content">
+                <!-- Overview Tab -->
+                <div id="tab-overview" class="tab-panel active">
+                  <div class="info-grid">
+                    <div class="info-item">
+                      <label>Full Name</label>
+                      <div class="info-value" id="infoFullName">—</div>
+                    </div>
+                    <div class="info-item">
+                      <label>Phone</label>
+                      <div class="info-value" id="infoPhone">—</div>
+                    </div>
+                    <div class="info-item" style="grid-column: 1/-1;">
+                      <label>Address</label>
+                      <div class="info-value" id="infoAddress">—</div>
+                    </div>
+                    <div class="info-item">
+                      <label>Availability</label>
+                      <div class="info-value" id="infoAvailability">—</div>
+                    </div>
+                    <div class="info-item">
+                      <label>Member Since</label>
+                      <div class="info-value" id="infoCreatedAt">—</div>
+                    </div>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted);">Skills</label>
+                    <div id="infoSkills" class="skills-list">
+                      <span style="color:var(--color-text-muted); font-size:0.875rem;">No skills listed.</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top:20px;">
+                    <label class="form-label" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted);">Interests</label>
+                    <div id="infoInterests" class="skills-list">
+                      <span style="color:var(--color-text-muted); font-size:0.875rem;">No interests selected.</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top:20px;">
+                    <label class="form-label" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted);">Experience</label>
+                    <div id="infoExperience" style="font-size:0.925rem; color:var(--color-text-primary); line-height:1.6; white-space:pre-wrap;">—</div>
+                  </div>
+                </div>
+
+                <!-- Edit Tab -->
+                <div id="tab-edit" class="tab-panel">
+                  <form id="volunteerEditForm">
+                    <div class="edit-grid-2">
+                      <div class="form-group">
+                        <label class="form-label" for="edit-fullName">Full Name *</label>
+                        <input type="text" id="edit-fullName" class="form-input" required>
+                      </div>
+                      <div class="form-group">
+                        <label class="form-label" for="edit-phone">Phone *</label>
+                        <input type="tel" id="edit-phone" class="form-input" required>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="edit-address">Address *</label>
+                      <input type="text" id="edit-address" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="edit-skills">Skills</label>
+                      <input type="text" id="edit-skills" class="form-input" placeholder="e.g. First Aid, Photography">
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Interests</label>
+                      <div class="edit-interests-grid" id="editInterestsGrid">
+                        <!-- rendered by JS -->
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label">Availability</label>
+                      <div class="edit-avail-row" id="editAvailRow">
+                        <!-- rendered by JS -->
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label class="form-label" for="edit-experience">Experience</label>
+                      <textarea id="edit-experience" class="form-input" rows="4"></textarea>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                      <button type="submit" id="saveProfileBtn" class="btn-save">
+                        <span class="material-icons-outlined">save</span> Save Changes
+                      </button>
+                      <button type="button" id="cancelEditBtn" class="btn-cancel">Cancel</button>
+                    </div>
+                  </form>
+                </div>
+              </div><!-- /tab-content -->
+            </div><!-- /profile-card -->
+          </div><!-- /profile-main -->
+        </div><!-- /profileSection -->
+
+        <!-- Shown when no profile exists -->
+        <div id="noProfileSection" style="display:none;">
+          <div class="page-header animate-fade-in">
+            <h1 class="page-title">Volunteer Profile</h1>
+            <p class="page-subtitle">You haven't registered as a volunteer yet.</p>
+          </div>
+          <div class="card animate-slide-up">
+            <div class="no-profile-cta">
+              <span class="material-icons-outlined">volunteer_activism</span>
+              <h2>You're not yet registered as a volunteer</h2>
+              <p>Register once and help us build a cleaner, greener community.</p>
+              <a href="/volunteer/register" class="btn btn-primary-gradient">
+                <span class="material-icons-outlined">add</span> Register Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="profileLoading" class="card animate-fade-in" style="text-align:center; padding:60px;">
+          <div class="spinner"></div>
+          <p style="margin-top:16px; color:var(--color-text-muted);">Loading your profile…</p>
+        </div>
+
+      </main>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

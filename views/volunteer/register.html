@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Registration — WASTE2WORTH</title>
+  <meta name="description" content="Register as a volunteer with WASTE2WORTH and help build a cleaner, greener community.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Volunteer Register Page Styles ── */
+    .vol-register-layout {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d2e14 0%, #1b5e20 40%, #2e7d32 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .vol-register-layout::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(76,175,80,0.15) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      border-radius: 50%;
+    }
+    .vol-register-layout::after {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(129,199,132,0.10) 0%, transparent 70%);
+      bottom: -80px; left: -80px;
+      border-radius: 50%;
+    }
+    .vol-card {
+      background: rgba(255,255,255,0.97);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.2);
+      width: 100%;
+      max-width: 700px;
+      padding: 48px 48px 40px;
+      position: relative;
+      z-index: 1;
+      animation: slideUp 0.5s ease both;
+    }
+    @keyframes slideUp {
+      from { opacity:0; transform: translateY(32px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+    .vol-header {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+    .vol-header-icon {
+      width: 64px; height: 64px;
+      background: linear-gradient(135deg, #2e7d32, #4caf50);
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(46,125,50,0.3);
+    }
+    .vol-header-icon .material-icons-outlined {
+      font-size: 32px;
+      color: white;
+    }
+    .vol-header h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+    .vol-header p {
+      color: var(--color-text-secondary);
+      font-size: 0.925rem;
+    }
+    .vol-section-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-primary);
+      margin: 28px 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .vol-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-border);
+    }
+    .vol-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 560px) {
+      .vol-card { padding: 28px 20px; }
+      .vol-grid-2 { grid-template-columns: 1fr; }
+    }
+    .interests-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 10px;
+    }
+    .interest-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--color-bg-body);
+      user-select: none;
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+    }
+    .interest-chip input[type="checkbox"] { display: none; }
+    .interest-chip .chip-dot {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 2px solid var(--color-border);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    .interest-chip input:checked ~ .chip-dot {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+    .interest-chip input:checked ~ .chip-dot::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .interest-chip:hover {
+      border-color: var(--color-primary-light);
+      background: var(--color-primary-bg);
+    }
+    .interest-chip:has(input:checked) {
+      border-color: var(--color-primary);
+      background: var(--color-primary-bg);
+      color: var(--color-primary-dark);
+      font-weight: 500;
+    }
+    .avail-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    @media (max-width: 560px) {
+      .avail-grid { grid-template-columns: 1fr 1fr; }
+    }
+    .avail-option {
+      position: relative;
+    }
+    .avail-option input[type="radio"] {
+      position: absolute; opacity: 0; width: 0; height: 0;
+    }
+    .avail-option label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 14px 8px;
+      border: 1.5px solid var(--color-border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      background: var(--color-bg-body);
+    }
+    .avail-option label .material-icons-outlined { font-size: 22px; color: var(--color-text-muted); }
+    .avail-option input:checked + label {
+      border-color: var(--color-primary);
+      background: var(--color-primary-bg);
+      color: var(--color-primary-dark);
+      font-weight: 600;
+    }
+    .avail-option input:checked + label .material-icons-outlined { color: var(--color-primary); }
+    .avail-option label:hover {
+      border-color: var(--color-primary-light);
+      background: var(--color-primary-bg);
+    }
+    .vol-already-registered {
+      display: none;
+      background: var(--color-primary-bg);
+      border: 1.5px solid var(--color-primary-light);
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+    }
+    .vol-already-registered .material-icons-outlined { font-size: 36px; color: var(--color-primary); }
+    .vol-already-registered h3 { color: var(--color-primary-dark); font-size: 1rem; }
+    .vol-already-registered p  { color: var(--color-text-secondary); font-size: 0.875rem; }
+    .btn-volunteer { 
+      background: linear-gradient(135deg, #2e7d32, #43a047);
+      color: white;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 8px;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-volunteer:hover { 
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(46,125,50,0.4);
+    }
+    .btn-volunteer:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.875rem;
+      margin-bottom: 20px;
+      position: relative;
+      z-index: 1;
+      transition: color 0.2s;
+    }
+    .back-link:hover { color: white; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="vol-register-layout">
+    <div style="position:relative; z-index:1; width:100%; max-width:700px;">
+      <a href="javascript:history.back()" class="back-link">
+        <span class="material-icons-outlined" style="font-size:18px;">arrow_back</span>
+        Go back
+      </a>
+
+      <div class="vol-card">
+        <div class="vol-header">
+          <div class="vol-header-icon">
+            <span class="material-icons-outlined">volunteer_activism</span>
+          </div>
+          <h1>Become a Volunteer</h1>
+          <p>Join our community of eco-warriors making a real difference for the planet.</p>
+        </div>
+
+        <!-- Already registered banner (shown if profile exists) -->
+        <div id="alreadyRegistered" class="vol-already-registered">
+          <span class="material-icons-outlined">check_circle</span>
+          <h3>You're already registered as a volunteer!</h3>
+          <p>You can view and update your volunteer profile at any time.</p>
+          <a href="/volunteer/profile" class="btn-volunteer" style="width:auto; margin-top:0;">
+            <span class="material-icons-outlined">manage_accounts</span> View My Profile
+          </a>
+        </div>
+
+        <!-- Registration form -->
+        <form id="volunteerRegisterForm">
+          <div class="vol-section-title">
+            <span class="material-icons-outlined" style="font-size:16px;">person</span>
+            Personal Information
+          </div>
+          <div class="vol-grid-2">
+            <div class="form-group">
+              <label class="form-label" for="vol-fullName">Full Name *</label>
+              <input type="text" id="vol-fullName" class="form-input" placeholder="Your full name" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="vol-phone">Phone Number *</label>
+              <input type="tel" id="vol-phone" class="form-input" placeholder="+880 17XX-XXXXXX" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vol-address">Address *</label>
+            <input type="text" id="vol-address" class="form-input" placeholder="Your full address" required>
+          </div>
+
+          <div class="vol-section-title">
+            <span class="material-icons-outlined" style="font-size:16px;">build</span>
+            Skills &amp; Experience
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vol-skills">Skills</label>
+            <input type="text" id="vol-skills" class="form-input" placeholder="e.g. First Aid, Photography, Teaching, Driving">
+            <p style="font-size:0.78rem; color:var(--color-text-muted); margin-top:4px;">Separate multiple skills with commas</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="vol-experience">Experience</label>
+            <textarea id="vol-experience" class="form-input" rows="3"
+              placeholder="Briefly describe any relevant volunteering or community experience..."></textarea>
+          </div>
+
+          <div class="vol-section-title">
+            <span class="material-icons-outlined" style="font-size:16px;">favorite</span>
+            Interests
+          </div>
+          <div class="interests-grid">
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Environmental Cleanup">
+              <span class="chip-dot"></span>
+              <span>🌿 Env. Cleanup</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Recycling">
+              <span class="chip-dot"></span>
+              <span>♻️ Recycling</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Community Outreach">
+              <span class="chip-dot"></span>
+              <span>🤝 Outreach</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Education & Awareness">
+              <span class="chip-dot"></span>
+              <span>📚 Education</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Waste Collection">
+              <span class="chip-dot"></span>
+              <span>🗑️ Waste Collection</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Upcycling & Crafts">
+              <span class="chip-dot"></span>
+              <span>🎨 Upcycling</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Tree Planting">
+              <span class="chip-dot"></span>
+              <span>🌳 Tree Planting</span>
+            </label>
+            <label class="interest-chip">
+              <input type="checkbox" name="interest" value="Social Media & Advocacy">
+              <span class="chip-dot"></span>
+              <span>📣 Advocacy</span>
+            </label>
+          </div>
+
+          <div class="vol-section-title">
+            <span class="material-icons-outlined" style="font-size:16px;">schedule</span>
+            Availability
+          </div>
+          <div class="avail-grid">
+            <div class="avail-option">
+              <input type="radio" name="availability" id="av-weekdays" value="Weekdays">
+              <label for="av-weekdays">
+                <span class="material-icons-outlined">work</span>
+                Weekdays
+              </label>
+            </div>
+            <div class="avail-option">
+              <input type="radio" name="availability" id="av-weekends" value="Weekends">
+              <label for="av-weekends">
+                <span class="material-icons-outlined">weekend</span>
+                Weekends
+              </label>
+            </div>
+            <div class="avail-option">
+              <input type="radio" name="availability" id="av-both" value="Both">
+              <label for="av-both">
+                <span class="material-icons-outlined">date_range</span>
+                Both
+              </label>
+            </div>
+            <div class="avail-option">
+              <input type="radio" name="availability" id="av-flexible" value="Flexible" checked>
+              <label for="av-flexible">
+                <span class="material-icons-outlined">tune</span>
+                Flexible
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" id="volunteerRegisterBtn" class="btn-volunteer" style="margin-top:28px;">
+            <span class="material-icons-outlined">volunteer_activism</span>
+            Register as Volunteer
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

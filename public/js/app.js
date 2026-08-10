@@ -126,13 +126,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // AUTHENTICATION
   // ============================================================
 
+  // Password Visibility Toggle
+  const togglePasswordBtn = document.getElementById('togglePassword');
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const passwordInput = document.getElementById('password');
+      if (!passwordInput) return;
+      const icon = togglePasswordBtn.querySelector('.material-icons-outlined');
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        if (icon) icon.textContent = 'visibility_off';
+      } else {
+        passwordInput.type = 'password';
+        if (icon) icon.textContent = 'visibility';
+      }
+    });
+  }
+
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value;
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const btn = loginForm.querySelector('button[type="submit"]');
+      const errBox = document.getElementById('authError');
+      if (errBox) errBox.style.display = 'none';
       
       try {
         btn.disabled = true;
@@ -140,13 +159,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const res = await apiCall('/api/auth/login', {
           method: 'POST',
-          body: JSON.stringify({ email, password })
+          body: JSON.stringify({ email, password }),
+          ignoreAuthError: true
         });
         
         showToast(res.message, 'success');
-        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 500);
+        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 400);
       } catch (err) {
-        // Error already handled by apiCall
+        if (errBox) {
+          const msgEl = document.getElementById('authErrorMessage');
+          if (msgEl) msgEl.textContent = err.message || 'Invalid email or password';
+          errBox.style.display = 'flex';
+        }
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Sign In';
@@ -158,12 +182,19 @@ document.addEventListener('DOMContentLoaded', () => {
   if (registerForm) {
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const name = document.getElementById('name').value;
-      const email = document.getElementById('email').value;
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
       const role = document.getElementById('role').value;
+      const errBox = document.getElementById('authError');
+      if (errBox) errBox.style.display = 'none';
       
       if (password.length < 6) {
+        if (errBox) {
+          const msgEl = document.getElementById('authErrorMessage');
+          if (msgEl) msgEl.textContent = 'Password must be at least 6 characters';
+          errBox.style.display = 'flex';
+        }
         return showToast('Password must be at least 6 characters', 'error');
       }
       
@@ -175,13 +206,18 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const res = await apiCall('/api/auth/register', {
           method: 'POST',
-          body: JSON.stringify({ name, email, password, role })
+          body: JSON.stringify({ name, email, password, role }),
+          ignoreAuthError: true
         });
         
         showToast(res.message, 'success');
-        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 500);
+        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 400);
       } catch (err) {
-        // Error already handled
+        if (errBox) {
+          const msgEl = document.getElementById('authErrorMessage');
+          if (msgEl) msgEl.textContent = err.message || 'Registration failed';
+          errBox.style.display = 'flex';
+        }
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Create Account';
@@ -324,6 +360,9 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn("User not logged in or failed to load user info:", err.message);
     }
   };
+
+  // Automatically attempt loading logged-in user profile & nav header state
+  loadUserInfo(true);
 
   // Profile Upgrade Helper
   window.upgradeRole = async (newRole) => {
@@ -1299,6 +1338,414 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUserInfo();
     loadProductStories();
+  }
+
+  // ============================================================
+  // VOLUNTEER REGISTRATION PAGE
+  // ============================================================
+  const volunteerRegisterForm = document.getElementById('volunteerRegisterForm');
+  if (volunteerRegisterForm) {
+    // Check if already registered
+    const checkExistingRegistration = async () => {
+      try {
+        await apiCall('/api/volunteers/me', { ignoreAuthError: true });
+        // Profile exists — show banner, hide form
+        const banner = document.getElementById('alreadyRegistered');
+        if (banner) banner.style.display = 'flex';
+        volunteerRegisterForm.style.display = 'none';
+      } catch (err) {
+        // 404 = not registered yet, show form normally
+      }
+    };
+    checkExistingRegistration();
+
+    volunteerRegisterForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('volunteerRegisterBtn');
+
+      const fullName     = document.getElementById('vol-fullName').value.trim();
+      const phone        = document.getElementById('vol-phone').value.trim();
+      const address      = document.getElementById('vol-address').value.trim();
+      const skills       = document.getElementById('vol-skills').value.trim();
+      const experience   = document.getElementById('vol-experience').value.trim();
+      const availability = document.querySelector('input[name="availability"]:checked')?.value || 'Flexible';
+      const interestBoxes = document.querySelectorAll('input[name="interest"]:checked');
+      const interests    = Array.from(interestBoxes).map(cb => cb.value).join(', ');
+
+      if (!fullName || !phone || !address) {
+        return showToast('Full name, phone, and address are required.', 'error');
+      }
+
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Registering…';
+
+        await apiCall('/api/volunteers/register', {
+          method: 'POST',
+          body: JSON.stringify({ fullName, phone, address, skills, interests, availability, experience })
+        });
+
+        showToast('You are now registered as a volunteer! 🌿', 'success');
+        setTimeout(() => { window.location.href = '/volunteer/profile'; }, 900);
+      } catch (err) {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons-outlined">volunteer_activism</span> Register as Volunteer';
+      }
+    });
+
+    loadUserInfo();
+  }
+
+  // ============================================================
+  // VOLUNTEER PROFILE PAGE
+  // ============================================================
+  const profileSection   = document.getElementById('profileSection');
+  const noProfileSection = document.getElementById('noProfileSection');
+  const profileLoading   = document.getElementById('profileLoading');
+
+  if (profileSection && noProfileSection) {
+    const INTERESTS_LIST = [
+      'Environmental Cleanup', 'Recycling', 'Community Outreach',
+      'Education & Awareness', 'Waste Collection', 'Upcycling & Crafts',
+      'Tree Planting', 'Social Media & Advocacy'
+    ];
+    const AVAIL_OPTIONS = ['Weekdays', 'Weekends', 'Both', 'Flexible'];
+
+    let currentProfile = null;
+
+    const renderEditInterests = (selected = '') => {
+      const grid = document.getElementById('editInterestsGrid');
+      if (!grid) return;
+      const selectedArr = selected ? selected.split(',').map(s => s.trim()) : [];
+      grid.innerHTML = INTERESTS_LIST.map((interest, i) => `
+        <label class="edit-chip">
+          <input type="checkbox" name="edit-interest" value="${interest}"
+            ${selectedArr.includes(interest) ? 'checked' : ''}>
+          ${interest}
+        </label>
+      `).join('');
+    };
+
+    const renderEditAvail = (current = 'Flexible') => {
+      const row = document.getElementById('editAvailRow');
+      if (!row) return;
+      row.innerHTML = AVAIL_OPTIONS.map(opt => `
+        <div class="edit-avail-opt">
+          <input type="radio" name="edit-availability" id="ea-${opt}" value="${opt}"
+            ${opt === current ? 'checked' : ''}>
+          <label for="ea-${opt}">${opt}</label>
+        </div>
+      `).join('');
+    };
+
+    const renderProfile = (p) => {
+      currentProfile = p;
+
+      // Hero section
+      document.getElementById('heroAvatar').textContent = (p.fullName || '?').substring(0, 2).toUpperCase();
+      document.getElementById('heroName').textContent     = p.fullName;
+      document.getElementById('heroEmail').textContent    = p.userEmail || '';
+      document.getElementById('heroPhone').textContent    = p.phone;
+      document.getElementById('heroAvailability').textContent = p.availability;
+
+      // Status pill
+      const pill = document.getElementById('toggleStatusBtn');
+      const label = document.getElementById('statusLabel');
+      if (pill && label) {
+        label.textContent = p.status;
+        pill.className = `status-pill ${p.status === 'Active' ? 'active' : 'inactive'}`;
+      }
+
+      // Overview tab
+      document.getElementById('infoFullName').textContent    = p.fullName;
+      document.getElementById('infoPhone').textContent       = p.phone;
+      document.getElementById('infoAddress').textContent     = p.address;
+      document.getElementById('infoAvailability').textContent = p.availability;
+      document.getElementById('infoCreatedAt').textContent   = formatDate(p.createdAt);
+      document.getElementById('infoExperience').textContent  = p.experience || '—';
+
+      const skillsEl = document.getElementById('infoSkills');
+      if (p.skills) {
+        skillsEl.innerHTML = p.skills.split(',').map(s => s.trim()).filter(Boolean)
+          .map(s => `<span class="skill-tag">${escapeHTML(s)}</span>`).join('');
+      } else {
+        skillsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">No skills listed.</span>';
+      }
+
+      const interestsEl = document.getElementById('infoInterests');
+      if (p.interests) {
+        interestsEl.innerHTML = p.interests.split(',').map(s => s.trim()).filter(Boolean)
+          .map(s => `<span class="interest-tag">${escapeHTML(s)}</span>`).join('');
+      } else {
+        interestsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">No interests selected.</span>';
+      }
+
+      // Populate edit tab fields
+      document.getElementById('edit-fullName').value  = p.fullName;
+      document.getElementById('edit-phone').value     = p.phone;
+      document.getElementById('edit-address').value   = p.address;
+      document.getElementById('edit-skills').value    = p.skills || '';
+      document.getElementById('edit-experience').value = p.experience || '';
+      renderEditInterests(p.interests);
+      renderEditAvail(p.availability);
+
+      profileLoading.style.display = 'none';
+      profileSection.style.display = 'block';
+    };
+
+    const loadProfile = async () => {
+      try {
+        const p = await apiCall('/api/volunteers/me');
+        renderProfile(p);
+      } catch (err) {
+        profileLoading.style.display = 'none';
+        noProfileSection.style.display = 'block';
+      }
+    };
+
+    // Tab switching
+    document.querySelectorAll('.profile-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        const target = document.getElementById(`tab-${tab.dataset.tab}`);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    // Edit Profile button (hero) → switch to edit tab
+    const editProfileBtn = document.getElementById('editProfileBtn');
+    if (editProfileBtn) {
+      editProfileBtn.addEventListener('click', () => {
+        document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-tab="edit"]').classList.add('active');
+        document.getElementById('tab-edit').classList.add('active');
+      });
+    }
+
+    // Cancel edit
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    if (cancelEditBtn) {
+      cancelEditBtn.addEventListener('click', () => {
+        document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelector('[data-tab="overview"]').classList.add('active');
+        document.getElementById('tab-overview').classList.add('active');
+      });
+    }
+
+    // Save profile changes
+    const volunteerEditForm = document.getElementById('volunteerEditForm');
+    if (volunteerEditForm) {
+      volunteerEditForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const saveBtn = document.getElementById('saveProfileBtn');
+
+        const fullName     = document.getElementById('edit-fullName').value.trim();
+        const phone        = document.getElementById('edit-phone').value.trim();
+        const address      = document.getElementById('edit-address').value.trim();
+        const skills       = document.getElementById('edit-skills').value.trim();
+        const experience   = document.getElementById('edit-experience').value.trim();
+        const availability = document.querySelector('input[name="edit-availability"]:checked')?.value || 'Flexible';
+        const interestBoxes = document.querySelectorAll('input[name="edit-interest"]:checked');
+        const interests    = Array.from(interestBoxes).map(cb => cb.value).join(', ');
+
+        if (!fullName || !phone || !address) {
+          return showToast('Full name, phone, and address are required.', 'error');
+        }
+
+        try {
+          saveBtn.disabled = true;
+          saveBtn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Saving…';
+
+          await apiCall('/api/volunteers/me', {
+            method: 'PUT',
+            body: JSON.stringify({ fullName, phone, address, skills, interests, availability, experience })
+          });
+
+          showToast('Profile updated successfully! 🌿', 'success');
+          await loadProfile();
+
+          // Switch back to overview
+          document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+          document.querySelector('[data-tab="overview"]').classList.add('active');
+          document.getElementById('tab-overview').classList.add('active');
+        } catch (err) {
+          // Error already shown by apiCall
+        } finally {
+          saveBtn.disabled = false;
+          saveBtn.innerHTML = '<span class="material-icons-outlined">save</span> Save Changes';
+        }
+      });
+    }
+
+    // Toggle Active / Inactive status
+    const toggleStatusBtn = document.getElementById('toggleStatusBtn');
+    if (toggleStatusBtn) {
+      toggleStatusBtn.addEventListener('click', async () => {
+        const newStatus = currentProfile?.status === 'Active' ? 'Inactive' : 'Active';
+        const confirmed = confirm(`Set your volunteer status to "${newStatus}"?`);
+        if (!confirmed) return;
+
+        try {
+          const res = await apiCall('/api/volunteers/me/status', { method: 'PATCH' });
+          showToast(res.message, 'success');
+          await loadProfile();
+        } catch (err) {}
+      });
+    }
+
+    loadUserInfo();
+    loadProfile();
+  }
+
+  // ============================================================
+  // ADMIN: VOLUNTEER MANAGEMENT PAGE
+  // ============================================================
+  const volunteersTbody = document.getElementById('volunteersTbody');
+  const volunteerDetailModal = document.getElementById('volunteerDetailModal');
+
+  if (volunteersTbody && volunteerDetailModal) {
+    let allVolunteers = [];
+
+    const renderBadge = (status) => status === 'Active'
+      ? `<span class="badge-active"><span class="badge-dot"></span> Active</span>`
+      : `<span class="badge-inactive"><span class="badge-dot"></span> Inactive</span>`;
+
+    const renderTable = (list) => {
+      if (list.length === 0) {
+        volunteersTbody.innerHTML = `
+          <tr><td colspan="8">
+            <div class="empty-state">
+              <span class="material-icons-outlined">search_off</span>
+              No volunteers match the current filter.
+            </div>
+          </td></tr>`;
+        return;
+      }
+      volunteersTbody.innerHTML = list.map((v, i) => `
+        <tr class="vol-table-row" data-id="${v.id}" id="vol-row-${v.id}">
+          <td>${i + 1}</td>
+          <td style="font-weight:600;">${escapeHTML(v.fullName)}</td>
+          <td style="color:var(--color-text-secondary);">${escapeHTML(v.userEmail || '')}</td>
+          <td>${escapeHTML(v.phone)}</td>
+          <td>${escapeHTML(v.availability)}</td>
+          <td>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; max-width:200px;">
+              ${v.skills ? v.skills.split(',').map(s => s.trim()).filter(Boolean).slice(0, 3)
+                .map(s => `<span class="skill-tag" style="font-size:0.72rem;">${escapeHTML(s)}</span>`).join('') : '—'}
+            </div>
+          </td>
+          <td>${renderBadge(v.status)}</td>
+          <td style="color:var(--color-text-muted);">${formatDate(v.createdAt)}</td>
+        </tr>
+      `).join('');
+
+      // Row click → open detail modal
+      volunteersTbody.querySelectorAll('.vol-table-row').forEach(row => {
+        row.addEventListener('click', () => openVolunteerDetail(row.dataset.id));
+      });
+    };
+
+    const loadVolunteers = async (status = '') => {
+      volunteersTbody.innerHTML = `<tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>`;
+      try {
+        const url = status ? `/api/volunteers?status=${encodeURIComponent(status)}` : '/api/volunteers';
+        const data = await apiCall(url);
+        allVolunteers = data.volunteers || [];
+
+        // Update stat cards
+        const s = data.summary || {};
+        document.getElementById('statTotal').textContent   = s.total   || 0;
+        document.getElementById('statActive').textContent  = s.active  || 0;
+        document.getElementById('statInactive').textContent = s.inactive || 0;
+
+        applySearch();
+      } catch (err) {
+        volunteersTbody.innerHTML = `<tr><td colspan="8" class="text-center" style="color:var(--color-accent-red);">Failed to load volunteers.</td></tr>`;
+      }
+    };
+
+    const applySearch = () => {
+      const query = (document.getElementById('volunteerSearch')?.value || '').toLowerCase();
+      const filtered = allVolunteers.filter(v =>
+        (v.fullName || '').toLowerCase().includes(query) ||
+        (v.userEmail || '').toLowerCase().includes(query)
+      );
+      renderTable(filtered);
+    };
+
+    const openVolunteerDetail = async (id) => {
+      try {
+        const v = await apiCall(`/api/volunteers/${id}`);
+        document.getElementById('modalTitle').textContent     = v.fullName;
+        document.getElementById('modalFullName').textContent  = v.fullName;
+        document.getElementById('modalUserName').textContent  = v.userName || '—';
+        document.getElementById('modalEmail').textContent     = v.userEmail || '—';
+        document.getElementById('modalPhone').textContent     = v.phone;
+        document.getElementById('modalAddress').textContent   = v.address;
+        document.getElementById('modalAvailability').textContent = v.availability;
+        document.getElementById('modalCreatedAt').textContent = formatDate(v.createdAt);
+        document.getElementById('modalUpdatedAt').textContent = formatDate(v.updatedAt);
+
+        // Status badge
+        const statusEl = document.getElementById('modalStatus');
+        statusEl.innerHTML = v.status === 'Active'
+          ? '<span class="badge-active"><span class="badge-dot"></span> Active</span>'
+          : '<span class="badge-inactive"><span class="badge-dot"></span> Inactive</span>';
+
+        // Skills
+        const skillsEl = document.getElementById('modalSkills');
+        if (v.skills) {
+          skillsEl.innerHTML = v.skills.split(',').map(s => s.trim()).filter(Boolean)
+            .map(s => `<span class="modal-skill-tag">${escapeHTML(s)}</span>`).join('');
+        } else {
+          skillsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">None listed.</span>';
+        }
+
+        // Interests
+        const interestsEl = document.getElementById('modalInterests');
+        if (v.interests) {
+          interestsEl.innerHTML = v.interests.split(',').map(s => s.trim()).filter(Boolean)
+            .map(s => `<span class="modal-interest-tag">${escapeHTML(s)}</span>`).join('');
+        } else {
+          interestsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">None listed.</span>';
+        }
+
+        // Experience
+        document.getElementById('modalExperience').textContent = v.experience || 'No experience information provided.';
+
+        volunteerDetailModal.classList.add('open');
+      } catch (err) {
+        showToast('Failed to load volunteer details.', 'error');
+      }
+    };
+
+    // Close modal
+    document.getElementById('closeModalBtn')?.addEventListener('click', () => {
+      volunteerDetailModal.classList.remove('open');
+    });
+    volunteerDetailModal.addEventListener('click', (e) => {
+      if (e.target === volunteerDetailModal) volunteerDetailModal.classList.remove('open');
+    });
+
+    // Status filter
+    const statusFilter = document.getElementById('statusFilter');
+    if (statusFilter) {
+      statusFilter.addEventListener('change', () => loadVolunteers(statusFilter.value));
+    }
+
+    // Search filter (client-side)
+    const searchInput = document.getElementById('volunteerSearch');
+    if (searchInput) {
+      searchInput.addEventListener('input', applySearch);
+    }
+
+    loadUserInfo();
+    loadVolunteers();
   }
 
 });

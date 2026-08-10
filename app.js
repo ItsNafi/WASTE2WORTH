@@ -16,6 +16,7 @@ const rewardRoutes   = require('./routes/rewardRoutes');
 const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const volunteerRoutes    = require('./routes/volunteerRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
 
@@ -39,16 +40,44 @@ const serveView = (viewPath) => (req, res) => {
   }
 };
 
-/* ── Role Guards for Page Routes ─────────────────────────── */
+const jwt = require('jsonwebtoken');
+
+/* ── Role Guards & Authenticated Redirects ───────────────── */
+const getDashboardRoute = (role) => {
+  if (!role) return '/storefront';
+  const r = role.toString().trim().toLowerCase();
+  if (r === 'citizen') return '/dashboard/citizen';
+  if (r === 'volunteer') return '/dashboard/volunteer';
+  if (r === 'bhangarishop' || r === 'bhangari') return '/dashboard/bhangari';
+  if (r === 'creator') return '/dashboard/creator';
+  if (r === 'admin') return '/dashboard/admin';
+  return '/storefront';
+};
+
+const redirectIfAuthenticated = (req, res, next) => {
+  const token = req.cookies?.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'w2w_super_secret_key_change_in_production');
+      if (decoded && decoded.role) {
+        return res.redirect(getDashboardRoute(decoded.role));
+      }
+    } catch (err) {
+      res.clearCookie('token', { path: '/' });
+    }
+  }
+  next();
+};
+
 const requirePageRole = (role) => (req, res, next) => {
   if (req.user && req.user.role === role) return next();
   res.status(403).send('<h2>403 Forbidden</h2><p>Access denied for your role.</p><a href="/login">Back to Login</a>');
 };
 
 /* ── Page Routes (HTML Views) ────────────────────────────── */
-app.get('/', (req, res) => res.redirect('/login'));
-app.get('/login', serveView('auth/login.html'));
-app.get('/register', serveView('auth/register.html'));
+app.get('/', redirectIfAuthenticated, (req, res) => res.redirect('/login'));
+app.get('/login', redirectIfAuthenticated, serveView('auth/login.html'));
+app.get('/register', redirectIfAuthenticated, serveView('auth/register.html'));
 
 app.get('/dashboard/citizen', verifyToken, requirePageRole('Citizen'), serveView('citizen/scrapForm.html'));
 app.get('/dashboard/citizen/pollution', verifyToken, requirePageRole('Citizen'), serveView('citizen/pollutionForm.html'));
@@ -56,7 +85,14 @@ app.get('/dashboard/bhangari', verifyToken, requirePageRole('BhangariShop'), ser
 app.get('/dashboard/creator', verifyToken, requirePageRole('Creator'), serveView('creator/rawMaterials.html'));
 app.get('/dashboard/creator/crafts/new', verifyToken, requirePageRole('Creator'), serveView('creator/craftForm.html'));
 app.get('/dashboard/volunteer', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/campaigns.html'));
+app.get('/dashboard/volunteer/waste-portal', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/wastePortal.html'));
+app.get('/dashboard/volunteer/product-story', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/productStory.html'));
 app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('admin/dashboard.html'));
+app.get('/dashboard/admin/volunteers', verifyToken, requirePageRole('Admin'), serveView('admin/volunteers.html'));
+
+/* ── Volunteer Registration (any logged-in user) ─────────────── */
+app.get('/volunteer/register', verifyToken, serveView('volunteer/register.html'));
+app.get('/volunteer/profile',  verifyToken, serveView('volunteer/profile.html'));
 
 app.get('/storefront', serveView('storefront/crafts.html'));
 app.get('/creator-profile/:id', serveView('creator-profile.html'));
@@ -75,6 +111,7 @@ app.use('/api/rewards',   rewardRoutes);
 app.use('/api/history',   recyclingHistoryRoutes);
 app.use('/api/payments',  paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/volunteers',    volunteerRoutes);
 
 /* ── Global Error Handler ────────────────────────────────── */
 app.use((err, req, res, next) => {
