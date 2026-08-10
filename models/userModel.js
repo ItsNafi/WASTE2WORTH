@@ -3,9 +3,10 @@ const pool = require('../config/db');
 const UserModel = {
   /** Find a user by email (returns full record including hashed password). */
   async findByEmail(email) {
+    const cleanEmail = (email || '').trim().toLowerCase();
     const [rows] = await pool.execute(
-      'SELECT * FROM Users WHERE email = ?',
-      [email]
+      'SELECT * FROM Users WHERE LOWER(email) = ?',
+      [cleanEmail]
     );
     return rows[0] || null;
   },

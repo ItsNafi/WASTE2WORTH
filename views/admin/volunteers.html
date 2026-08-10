@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Volunteers — Admin — WASTE2WORTH</title>
+  <meta name="description" content="Admin panel for managing WASTE2WORTH volunteer registrations.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Admin Volunteers Page Styles ── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    @media(max-width:640px) { .stat-cards { grid-template-columns: 1fr; } }
+    .vol-stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      transition: box-shadow 0.2s, transform 0.2s;
+      animation: slideUp 0.4s ease both;
+    }
+    .vol-stat-card:hover { box-shadow: var(--shadow-elevated); transform: translateY(-2px); }
+    .vol-stat-card:nth-child(2) { animation-delay: 0.08s; }
+    .vol-stat-card:nth-child(3) { animation-delay: 0.16s; }
+    @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .stat-icon-box {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .stat-icon-box .material-icons-outlined { font-size: 26px; }
+    .stat-icon-box.total   { background: var(--color-accent-blue-bg); }
+    .stat-icon-box.total   .material-icons-outlined { color: var(--color-accent-blue); }
+    .stat-icon-box.active  { background: var(--color-primary-bg); }
+    .stat-icon-box.active  .material-icons-outlined { color: var(--color-primary); }
+    .stat-icon-box.inactive{ background: var(--color-accent-amber-bg); }
+    .stat-icon-box.inactive .material-icons-outlined { color: var(--color-accent-amber); }
+    .stat-info .stat-value { font-size: 2rem; font-weight: 700; color: var(--color-text-primary); line-height: 1; }
+    .stat-info .stat-label { font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; }
+
+    /* Filter bar */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .filter-bar .form-input {
+      max-width: 220px;
+      padding: 10px 14px;
+      font-size: 0.875rem;
+    }
+    .filter-search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+      max-width: 340px;
+    }
+    .filter-search-wrap .material-icons-outlined {
+      position: absolute;
+      left: 12px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 18px;
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+    .filter-search-wrap input {
+      padding-left: 38px !important;
+    }
+
+    /* Table */
+    .vol-table-row { cursor: pointer; }
+    .vol-table-row:hover td { background: var(--color-primary-bg); }
+
+    /* Status badges */
+    .badge-active {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--color-primary-bg); color: var(--color-primary-dark);
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .badge-inactive {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--color-status-sold); color: var(--color-text-secondary);
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 600;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+
+    /* Detail modal */
+    .vol-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .vol-modal-overlay.open { display: flex; animation: fadeIn 0.2s ease; }
+    @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+    .vol-modal {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 32px 80px rgba(0,0,0,0.25);
+      width: 100%;
+      max-width: 580px;
+      max-height: 85vh;
+      overflow-y: auto;
+      animation: modalSlide 0.3s ease;
+    }
+    @keyframes modalSlide { from { transform: translateY(30px); opacity:0; } to { transform: translateY(0); opacity:1; } }
+    .vol-modal-header {
+      padding: 24px 28px 20px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      position: sticky; top: 0; background: white; z-index: 1;
+      border-radius: 20px 20px 0 0;
+    }
+    .vol-modal-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--color-text-primary); }
+    .btn-close-modal {
+      background: var(--color-bg-body);
+      border: none;
+      border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-close-modal:hover { background: var(--color-border); }
+    .vol-modal-body { padding: 24px 28px 28px; }
+    .modal-section-title {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: var(--color-text-muted);
+      margin: 20px 0 12px;
+    }
+    .modal-section-title:first-child { margin-top: 0; }
+    .modal-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .modal-info-item label {
+      font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.05em; color: var(--color-text-muted);
+      display: block; margin-bottom: 4px;
+    }
+    .modal-info-item .modal-val {
+      font-size: 0.9rem;
+      color: var(--color-text-primary);
+      font-weight: 500;
+    }
+    .modal-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .modal-skill-tag {
+      background: var(--color-primary-bg); color: var(--color-primary-dark);
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 500;
+    }
+    .modal-interest-tag {
+      background: var(--color-accent-amber-bg); color: var(--color-accent-amber);
+      padding: 4px 10px; border-radius: 100px;
+      font-size: 0.78rem; font-weight: 500;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--color-text-muted);
+    }
+    .empty-state .material-icons-outlined { font-size: 48px; margin-bottom: 12px; display: block; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/admin" class="nav-item">
+          <span class="material-icons-outlined">admin_panel_settings</span> System Admin
+        </a>
+        <a href="/dashboard/admin/volunteers" class="nav-item active">
+          <span class="material-icons-outlined">volunteer_activism</span> Volunteers
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 Admin Portal</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search"></div>
+        <div class="header-user" id="headerUser">
+          <div class="user-info">
+            <span class="user-name">Admin</span>
+            <span class="user-role">Admin</span>
+          </div>
+          <div class="user-avatar">A</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Volunteer Management</h1>
+          <p class="page-subtitle">View, filter, and manage all registered volunteers.</p>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="stat-cards">
+          <div class="vol-stat-card">
+            <div class="stat-icon-box total"><span class="material-icons-outlined">groups</span></div>
+            <div class="stat-info">
+              <div class="stat-value" id="statTotal">—</div>
+              <div class="stat-label">Total Volunteers</div>
+            </div>
+          </div>
+          <div class="vol-stat-card">
+            <div class="stat-icon-box active"><span class="material-icons-outlined">check_circle</span></div>
+            <div class="stat-info">
+              <div class="stat-value" id="statActive">—</div>
+              <div class="stat-label">Active</div>
+            </div>
+          </div>
+          <div class="vol-stat-card">
+            <div class="stat-icon-box inactive"><span class="material-icons-outlined">pause_circle</span></div>
+            <div class="stat-info">
+              <div class="stat-value" id="statInactive">—</div>
+              <div class="stat-label">Inactive</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Volunteer Table Card -->
+        <div class="card animate-slide-up">
+          <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <h2 class="card-title">Registered Volunteers</h2>
+          </div>
+
+          <!-- Filter bar -->
+          <div class="filter-bar">
+            <div class="filter-search-wrap">
+              <span class="material-icons-outlined">search</span>
+              <input type="text" id="volunteerSearch" class="form-input" placeholder="Search by name or email…">
+            </div>
+            <select id="statusFilter" class="form-input" style="max-width:160px;">
+              <option value="">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Availability</th>
+                  <th>Skills</th>
+                  <th>Status</th>
+                  <th>Registered</th>
+                </tr>
+              </thead>
+              <tbody id="volunteersTbody">
+                <tr><td colspan="8" class="text-center"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Volunteer Detail Modal -->
+  <div id="volunteerDetailModal" class="vol-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="vol-modal">
+      <div class="vol-modal-header">
+        <h2 id="modalTitle">Volunteer Details</h2>
+        <button class="btn-close-modal" id="closeModalBtn" aria-label="Close">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+      <div class="vol-modal-body">
+        <div class="modal-section-title">Personal Information</div>
+        <div class="modal-info-grid">
+          <div class="modal-info-item">
+            <label>Full Name</label>
+            <div class="modal-val" id="modalFullName">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Account Name</label>
+            <div class="modal-val" id="modalUserName">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Email</label>
+            <div class="modal-val" id="modalEmail">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Phone</label>
+            <div class="modal-val" id="modalPhone">—</div>
+          </div>
+          <div class="modal-info-item" style="grid-column:1/-1;">
+            <label>Address</label>
+            <div class="modal-val" id="modalAddress">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Availability</label>
+            <div class="modal-val" id="modalAvailability">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Status</label>
+            <div class="modal-val" id="modalStatus">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Registered</label>
+            <div class="modal-val" id="modalCreatedAt">—</div>
+          </div>
+          <div class="modal-info-item">
+            <label>Last Updated</label>
+            <div class="modal-val" id="modalUpdatedAt">—</div>
+          </div>
+        </div>
+
+        <div class="modal-section-title">Skills</div>
+        <div id="modalSkills" class="modal-tags">
+          <span style="color:var(--color-text-muted); font-size:0.875rem;">None listed.</span>
+        </div>
+
+        <div class="modal-section-title">Interests</div>
+        <div id="modalInterests" class="modal-tags">
+          <span style="color:var(--color-text-muted); font-size:0.875rem;">None listed.</span>
+        </div>
+
+        <div class="modal-section-title">Experience</div>
+        <div id="modalExperience" style="font-size:0.9rem; color:var(--color-text-primary); line-height:1.6; white-space:pre-wrap; background:var(--color-bg-body); padding:14px; border-radius:10px;">—</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js" defer></script>
+</body>
+</html>

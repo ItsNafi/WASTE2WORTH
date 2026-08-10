@@ -2,20 +2,28 @@ const bcrypt    = require('bcryptjs');
 const jwt       = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
 
-/* ── Role → dashboard redirect map ───────────────────────── */
-const REDIRECT = {
-  Citizen:      '/dashboard/citizen',
-  Volunteer:    '/dashboard/volunteer',
-  BhangariShop: '/dashboard/bhangari',
-  Creator:      '/dashboard/creator',
-  Admin:        '/dashboard/admin'
-};
+const JWT_SECRET = process.env.JWT_SECRET || 'w2w_super_secret_key_change_in_production';
+
+/* ── Role → dashboard redirect helper ───────────────────── */
+function getRedirectUrl(role) {
+  if (!role) return '/storefront';
+  const r = role.toString().trim().toLowerCase();
+  if (r === 'citizen') return '/dashboard/citizen';
+  if (r === 'volunteer') return '/dashboard/volunteer';
+  if (r === 'bhangarishop' || r === 'bhangari') return '/dashboard/bhangari';
+  if (r === 'creator') return '/dashboard/creator';
+  if (r === 'admin') return '/dashboard/admin';
+  return '/storefront';
+}
 
 const AuthController = {
   /* ── Register ──────────────────────────────────────────── */
   async register(req, res) {
     try {
-      const { name, email, password, role } = req.body;
+      let { name, email, password, role } = req.body;
+
+      name = (name || '').trim();
+      email = (email || '').trim().toLowerCase();
 
       if (!name || !email || !password) {
         return res.status(400).json({ error: 'Name, email, and password are required' });
@@ -39,7 +47,7 @@ const AuthController = {
 
       const token = jwt.sign(
         { id: user.id, name: user.name, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
@@ -53,7 +61,7 @@ const AuthController = {
 
       res.status(201).json({
         message:  'Registration successful',
-        redirect: REDIRECT[user.role] || '/storefront'
+        redirect: getRedirectUrl(user.role)
       });
     } catch (err) {
       console.error('Register error:', err);
@@ -64,7 +72,8 @@ const AuthController = {
   /* ── Login ─────────────────────────────────────────────── */
   async login(req, res) {
     try {
-      const { email, password } = req.body;
+      let { email, password } = req.body;
+      email = (email || '').trim().toLowerCase();
 
       if (!email || !password) {
         return res.status(400).json({ error: 'Email and password are required' });
@@ -82,7 +91,7 @@ const AuthController = {
 
       const token = jwt.sign(
         { id: user.id, name: user.name, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
@@ -96,7 +105,7 @@ const AuthController = {
 
       res.json({
         message:  'Login successful',
-        redirect: REDIRECT[user.role] || '/storefront'
+        redirect: getRedirectUrl(user.role)
       });
     } catch (err) {
       console.error('Login error:', err);
@@ -106,7 +115,7 @@ const AuthController = {
 
   /* ── Logout ────────────────────────────────────────────── */
   logout(_req, res) {
-    res.clearCookie('token');
+    res.clearCookie('token', { path: '/' });
     res.json({ message: 'Logged out successfully', redirect: '/login' });
   },
 
@@ -139,7 +148,7 @@ const AuthController = {
       
       const token = jwt.sign(
         { id: user.id, name: user.name, email: user.email, role: user.role },
-        process.env.JWT_SECRET,
+        JWT_SECRET,
         { expiresIn: '24h' }
       );
 
@@ -151,7 +160,7 @@ const AuthController = {
         maxAge:   24 * 60 * 60 * 1000
       });
 
-      res.json({ message: `Successfully upgraded to ${role}!`, redirect: REDIRECT[user.role] });
+      res.json({ message: `Successfully upgraded to ${role}!`, redirect: getRedirectUrl(user.role) });
     } catch (err) {
       console.error('Update role error:', err);
       res.status(500).json({ error: 'Failed to update role' });
@@ -160,3 +169,4 @@ const AuthController = {
 };
 
 module.exports = AuthController;
+
