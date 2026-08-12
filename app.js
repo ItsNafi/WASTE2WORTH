@@ -13,6 +13,10 @@ const campaignRoutes = require('./routes/campaignRoutes');
 const pollutionRoutes = require('./routes/pollutionRoutes');
 const adminRoutes    = require('./routes/adminRoutes');
 const rewardRoutes   = require('./routes/rewardRoutes');
+const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const volunteerRoutes = require('./routes/volunteerRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
 const jwt = require('jsonwebtoken');
@@ -80,10 +84,18 @@ app.get('/dashboard/bhangari', verifyToken, requirePageRole('BhangariShop'), ser
 app.get('/dashboard/creator', verifyToken, requirePageRole('Creator'), serveView('creator/rawMaterials.html'));
 app.get('/dashboard/creator/crafts/new', verifyToken, requirePageRole('Creator'), serveView('creator/craftForm.html'));
 app.get('/dashboard/volunteer', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/campaigns.html'));
+app.get('/dashboard/volunteer/waste-portal', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/wastePortal.html'));
+app.get('/dashboard/volunteer/product-story', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/productStory.html'));
 app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('admin/dashboard.html'));
+app.get('/dashboard/admin/volunteers', verifyToken, requirePageRole('Admin'), serveView('admin/volunteers.html'));
 app.get('/dashboard/admin/complaints', verifyToken, requirePageRole('Admin'), serveView('admin/complaints.html'));
 
+app.get('/volunteer/register', verifyToken, serveView('volunteer/register.html'));
+app.get('/volunteer/profile', verifyToken, serveView('volunteer/profile.html'));
+
 app.get('/storefront', serveView('storefront/crafts.html'));
+app.get('/creator-profile/:id', serveView('creator-profile.html'));
+app.get('/payments/transactions', verifyToken, serveView('payments/transactions.html'));
 
 /* ── API Routes ──────────────────────────────────────────── */
 app.use('/api/auth',      authRoutes);
@@ -95,6 +107,10 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/pollution', pollutionRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/rewards',   rewardRoutes);
+app.use('/api/history', recyclingHistoryRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/volunteers', volunteerRoutes);
 
 /* ── Global Error Handler ────────────────────────────────── */
 app.use((err, req, res, next) => {
