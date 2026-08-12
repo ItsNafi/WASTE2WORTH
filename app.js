@@ -15,6 +15,7 @@ const adminRoutes    = require('./routes/adminRoutes');
 const rewardRoutes   = require('./routes/rewardRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -36,16 +37,42 @@ const serveView = (viewPath) => (req, res) => {
   }
 };
 
-/* ── Role Guards for Page Routes ─────────────────────────── */
+/* ── Role Guards & Authenticated Redirects ───────────────── */
+const getDashboardRoute = (role) => {
+  if (!role) return '/storefront';
+  const r = role.toString().trim().toLowerCase();
+  if (r === 'citizen') return '/dashboard/citizen';
+  if (r === 'volunteer') return '/dashboard/volunteer';
+  if (r === 'bhangarishop' || r === 'bhangari') return '/dashboard/bhangari';
+  if (r === 'creator') return '/dashboard/creator';
+  if (r === 'admin') return '/dashboard/admin';
+  return '/storefront';
+};
+
+const redirectIfAuthenticated = (req, res, next) => {
+  const token = req.cookies?.token;
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'w2w_super_secret_key_change_in_production');
+      if (decoded && decoded.role) {
+        return res.redirect(getDashboardRoute(decoded.role));
+      }
+    } catch (err) {
+      res.clearCookie('token', { path: '/' });
+    }
+  }
+  next();
+};
+
 const requirePageRole = (role) => (req, res, next) => {
   if (req.user && req.user.role === role) return next();
   res.status(403).send('<h2>403 Forbidden</h2><p>Access denied for your role.</p><a href="/login">Back to Login</a>');
 };
 
 /* ── Page Routes (HTML Views) ────────────────────────────── */
-app.get('/', (req, res) => res.redirect('/login'));
-app.get('/login', serveView('auth/login.html'));
-app.get('/register', serveView('auth/register.html'));
+app.get('/', redirectIfAuthenticated, (req, res) => res.redirect('/login'));
+app.get('/login', redirectIfAuthenticated, serveView('auth/login.html'));
+app.get('/register', redirectIfAuthenticated, serveView('auth/register.html'));
 
 app.get('/dashboard/citizen', verifyToken, requirePageRole('Citizen'), serveView('citizen/scrapForm.html'));
 app.get('/dashboard/citizen/pollution', verifyToken, requirePageRole('Citizen'), serveView('citizen/pollutionForm.html'));
