@@ -16,10 +16,9 @@ const rewardRoutes   = require('./routes/rewardRoutes');
 const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-const volunteerRoutes = require('./routes/volunteerRoutes');
+const volunteerRoutes    = require('./routes/volunteerRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
-const jwt = require('jsonwebtoken');
 
 const app = express();
 
@@ -40,6 +39,8 @@ const serveView = (viewPath) => (req, res) => {
     res.status(404).send('<h2>404</h2><p>View not found.</p>');
   }
 };
+
+const jwt = require('jsonwebtoken');
 
 /* ── Role Guards & Authenticated Redirects ───────────────── */
 const getDashboardRoute = (role) => {
@@ -90,8 +91,9 @@ app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('ad
 app.get('/dashboard/admin/volunteers', verifyToken, requirePageRole('Admin'), serveView('admin/volunteers.html'));
 app.get('/dashboard/admin/complaints', verifyToken, requirePageRole('Admin'), serveView('admin/complaints.html'));
 
+/* ── Volunteer Registration (any logged-in user) ─────────────── */
 app.get('/volunteer/register', verifyToken, serveView('volunteer/register.html'));
-app.get('/volunteer/profile', verifyToken, serveView('volunteer/profile.html'));
+app.get('/volunteer/profile',  verifyToken, serveView('volunteer/profile.html'));
 
 app.get('/storefront', serveView('storefront/crafts.html'));
 app.get('/creator-profile/:id', serveView('creator-profile.html'));
@@ -107,10 +109,10 @@ app.use('/api/campaigns', campaignRoutes);
 app.use('/api/pollution', pollutionRoutes);
 app.use('/api/admin',     adminRoutes);
 app.use('/api/rewards',   rewardRoutes);
-app.use('/api/history', recyclingHistoryRoutes);
-app.use('/api/payments', paymentRoutes);
+app.use('/api/history',   recyclingHistoryRoutes);
+app.use('/api/payments',  paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/volunteers', volunteerRoutes);
+app.use('/api/volunteers',    volunteerRoutes);
 
 /* ── Global Error Handler ────────────────────────────────── */
 app.use((err, req, res, next) => {
