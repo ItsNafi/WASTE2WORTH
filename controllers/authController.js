@@ -38,7 +38,7 @@ const AuthController = {
       }
 
       const existing = await UserModel.findByEmail(email);
-      if (existing) {
+      if (existing && existing.email && existing.email.toLowerCase() === email) {
         return res.status(409).json({ error: 'Email already registered' });
       }
 

@@ -974,21 +974,29 @@ document.addEventListener('DOMContentLoaded', () => {
           feed.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No upcoming campaigns.</div>`;
           return;
         }
-        feed.innerHTML = campaigns.map(c => `
+        feed.innerHTML = campaigns.map(c => {
+          const isOver = new Date(c.date) < new Date();
+          const statusBadge = isOver ? '<span style="background-color:#d32f2f;color:white;padding:2px 6px;border-radius:4px;font-size:12px;font-weight:bold;">OVER</span>' : '<span style="background-color:#2e7d32;color:white;padding:2px 6px;border-radius:4px;font-size:12px;font-weight:bold;">ACTIVE</span>';
+          const registerBtn = isOver ? '' : `<div style="margin-top:16px;">
+                <button class="btn btn-outline btn-block" onclick="registerCampaign(${c.campaignId})">Register</button>
+              </div>`;
+          return `
           <div class="product-card animate-fade-in">
             <div class="product-card-body">
-              <h3 class="product-card-title">${escapeHTML(c.title)}</h3>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="product-card-title">${escapeHTML(c.title)}</h3>
+                ${statusBadge}
+              </div>
+              <div class="product-card-creator"><strong>Campaign ID: #${c.campaignId}</strong></div>
               <div class="product-card-creator">Date: ${formatDate(c.date)}</div>
               <div class="product-card-desc">Zone: ${escapeHTML(c.boundaryZone)}</div>
               <div class="product-card-meta">
                 <div>Volunteers: ${c.currentVolunteers}/${c.participantCap}</div>
               </div>
-              <div style="margin-top:16px;">
-                <button class="btn btn-outline btn-block" onclick="registerCampaign(${c.campaignId})">Register</button>
-              </div>
+              ${registerBtn}
             </div>
           </div>
-        `).join('');
+        `}).join('');
       } catch (err) {
         feed.innerHTML = `<div class="form-error">Failed to load campaigns.</div>`;
       }
@@ -1030,6 +1038,158 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUserInfo();
     loadCampaigns();
+  }
+
+  // ============================================================
+  // VOLUNTEER: WASTE PORTAL
+  // ============================================================
+  if (currentPath.includes('/volunteer/waste-portal')) {
+    // 1. Tab Switching
+    const tabBtns = document.querySelectorAll('.tab-nav .tab-btn');
+    const tabPanels = document.querySelectorAll('.tab-panel');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabPanels.forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        const targetPanel = document.getElementById('panel' + btn.dataset.tab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(''));
+        if (targetPanel) targetPanel.classList.add('active');
+      });
+    });
+
+    // 2. Load drives into the dropdown
+    const loadDrivesDropdown = async () => {
+      const select = document.getElementById('wlDrive');
+      if (!select) return;
+      try {
+        const drives = await apiCall('/api/drives');
+        select.innerHTML = '<option value="">— No drive (ad-hoc collection) —</option>' + 
+          drives.map(d => `<option value="${d.driveId}">${escapeHTML(d.title)} (${formatDate(d.date)})</option>`).join('');
+      } catch (err) {}
+    };
+
+    // 3. Load My Logs
+    const loadMyLogs = async () => {
+      const container = document.getElementById('myLogsContainer');
+      if (!container) return;
+      try {
+        const logs = await apiCall('/api/waste-logs');
+        // Update stats
+        if (document.getElementById('statMyLogs')) document.getElementById('statMyLogs').textContent = logs.length;
+        const totalKg = logs.reduce((sum, l) => sum + parseFloat(l.weightKg || 0), 0);
+        if (document.getElementById('statKg')) document.getElementById('statKg').textContent = totalKg.toFixed(1);
+        const claimedCount = logs.filter(l => l.status === 'Claimed').length;
+        if (document.getElementById('statClaimed')) document.getElementById('statClaimed').textContent = claimedCount;
+
+        if (logs.length === 0) {
+          container.innerHTML = '<div class="empty-state">No waste logs recorded yet.</div>';
+          return;
+        }
+        container.innerHTML = logs.map(l => `
+          <div class="log-card animate-fade-in">
+            ${l.photoUrl ? `<img src="${l.photoUrl}" class="log-thumb">` : `<div class="log-thumb-placeholder"><span class="material-icons-outlined">image</span></div>`}
+            <div class="log-info">
+              <div class="log-title">${escapeHTML(l.category)} — ${l.weightKg} kg</div>
+              <div class="log-meta">Logged on ${formatDate(l.createdAt)} ${l.driveTitle ? `| Drive: ${escapeHTML(l.driveTitle)}` : ''}</div>
+              ${l.notes ? `<div style="font-size:12px;color:var(--color-text-secondary);">${escapeHTML(l.notes)}</div>` : ''}
+            </div>
+            <span class="status-pill" data-status="${l.status || 'Pending'}">${l.status || 'Pending'}</span>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="form-error">Failed to load waste logs.</div>';
+      }
+    };
+
+    // 4. Load Upcoming/All Drives
+    const loadDrives = async () => {
+      const container = document.getElementById('drivesContainer');
+      if (!container) return;
+      try {
+        const drives = await apiCall('/api/drives');
+        if (drives.length === 0) {
+          container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No cleanup drives available.</div>';
+          return;
+        }
+        container.innerHTML = drives.map(d => `
+          <div class="drive-card">
+            <div class="drive-card-title">${escapeHTML(d.title)}</div>
+            <div class="drive-card-meta">
+              <span><span class="material-icons-outlined" style="font-size:14px;">place</span> ${escapeHTML(d.location || d.boundaryZone || '')}</span>
+              <span><span class="material-icons-outlined" style="font-size:14px;">calendar_today</span> ${formatDate(d.date)}</span>
+            </div>
+            <span class="status-pill" data-status="${d.status}">${d.status}</span>
+          </div>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = '<div class="form-error" style="grid-column:1/-1;">Failed to load drives.</div>';
+      }
+    };
+
+    // 5. Submit waste log form
+    const wasteForm = document.getElementById('wasteLogForm');
+    if (wasteForm) {
+      setupPhotoPreview('wastePhoto', 'wastePhotoPreview', 'wasteUploadZone');
+      wasteForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(wasteForm);
+        const submitBtn = document.getElementById('wasteLogSubmitBtn');
+        try {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = 'Submitting...';
+          const res = await apiCall('/api/waste-logs', { method: 'POST', body: formData });
+          showToast(res.message || 'Waste log submitted successfully!', 'success');
+          wasteForm.reset();
+          const preview = document.getElementById('wastePhotoPreview');
+          if (preview) {
+            preview.style.backgroundImage = 'none';
+            preview.classList.remove('has-image');
+          }
+          // Refresh user info (Green Points balance) and lists!
+          loadUserInfo();
+          loadMyLogs();
+        } catch (err) {
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span class="material-icons-outlined">add_circle</span> Submit Waste Log';
+        }
+      });
+    }
+
+    // 6. Submit cleanup drive form
+    const driveForm = document.getElementById('driveForm');
+    if (driveForm) {
+      driveForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('driveSubmitBtn');
+        const title = document.getElementById('driveTitle').value;
+        const location = document.getElementById('driveLocation').value;
+        const date = document.getElementById('driveDate').value;
+        const participantCap = document.getElementById('driveCap').value;
+        try {
+          submitBtn.disabled = true;
+          submitBtn.innerHTML = 'Creating...';
+          await apiCall('/api/drives', {
+            method: 'POST',
+            body: JSON.stringify({ title, location, date, participantCap })
+          });
+          showToast('Cleanup drive created successfully!', 'success');
+          driveForm.reset();
+          loadDrives();
+          loadDrivesDropdown();
+        } catch (err) {
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span class="material-icons-outlined">add_location</span> Create Drive';
+        }
+      });
+    }
+
+    // Initialize all
+    loadUserInfo();
+    loadDrivesDropdown();
+    loadMyLogs();
+    loadDrives();
   }
 
   // ============================================================
@@ -1148,12 +1308,47 @@ document.addEventListener('DOMContentLoaded', () => {
           await apiCall('/api/admin/campaigns', { method: 'POST', body: JSON.stringify(body) });
           showToast('Campaign launched successfully!', 'success');
           campaignForm.reset();
+          loadAdminCampaigns();
         } catch (err) {}
       });
     }
 
+    const loadAdminCampaigns = async () => {
+      const feed = document.getElementById('adminCampaignsFeed');
+      if (!feed) return;
+      try {
+        const campaigns = await apiCall('/api/campaigns');
+        if (campaigns.length === 0) {
+          feed.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No scheduled campaigns.</div>`;
+          return;
+        }
+        feed.innerHTML = campaigns.map(c => {
+          const isOver = new Date(c.date) < new Date();
+          const statusBadge = isOver ? '<span style="background-color:#d32f2f;color:white;padding:2px 6px;border-radius:4px;font-size:12px;font-weight:bold;">OVER</span>' : '<span style="background-color:#2e7d32;color:white;padding:2px 6px;border-radius:4px;font-size:12px;font-weight:bold;">ACTIVE</span>';
+          return `
+          <div class="product-card animate-fade-in">
+            <div class="product-card-body">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="product-card-title">${escapeHTML(c.title)}</h3>
+                ${statusBadge}
+              </div>
+              <div class="product-card-creator"><strong>Campaign ID: #${c.campaignId}</strong></div>
+              <div class="product-card-creator">Date: ${formatDate(c.date)}</div>
+              <div class="product-card-desc">Zone: ${escapeHTML(c.boundaryZone)}</div>
+              <div class="product-card-meta">
+                <div>Volunteers: ${c.currentVolunteers}/${c.participantCap}</div>
+              </div>
+            </div>
+          </div>
+        `}).join('');
+      } catch (err) {
+        feed.innerHTML = `<div class="form-error">Failed to load campaigns.</div>`;
+      }
+    };
+
     loadUserInfo();
     loadAdminDashboard();
+    loadAdminCampaigns();
   }
 
   // Certificate Download Helper

@@ -17,6 +17,8 @@ const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const volunteerRoutes    = require('./routes/volunteerRoutes');
+const attendanceRoutes   = require('./routes/attendanceRoutes');
+const { driveRouter, wasteLogRouter, wasteRequestRouter } = require('./routes/wastePortalRoutes');
 
 const { verifyToken } = require('./middleware/authMiddleware');
 
@@ -89,10 +91,12 @@ app.get('/dashboard/volunteer/waste-portal', verifyToken, requirePageRole('Volun
 app.get('/dashboard/volunteer/product-story', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/productStory.html'));
 app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('admin/dashboard.html'));
 app.get('/dashboard/admin/volunteers', verifyToken, requirePageRole('Admin'), serveView('admin/volunteers.html'));
+app.get('/dashboard/admin/campaign-qr', verifyToken, requirePageRole('Admin'), serveView('admin/campaign-qr.html'));
 
 /* ── Volunteer Registration (any logged-in user) ─────────────── */
 app.get('/volunteer/register', verifyToken, serveView('volunteer/register.html'));
 app.get('/volunteer/profile',  verifyToken, serveView('volunteer/profile.html'));
+app.get('/volunteer/scan', verifyToken, serveView('volunteer/scan.html'));
 
 app.get('/storefront', serveView('storefront/crafts.html'));
 app.get('/creator-profile/:id', serveView('creator-profile.html'));
@@ -112,6 +116,10 @@ app.use('/api/history',   recyclingHistoryRoutes);
 app.use('/api/payments',  paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/volunteers',    volunteerRoutes);
+app.use('/api',               attendanceRoutes);
+app.use('/api/drives',          driveRouter);
+app.use('/api/waste-logs',      wasteLogRouter);
+app.use('/api/waste-requests',  wasteRequestRouter);
 
 /* ── Global Error Handler ────────────────────────────────── */
 app.use((err, req, res, next) => {

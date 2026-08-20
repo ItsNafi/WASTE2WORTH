@@ -2,10 +2,92 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="refresh" content="0; url=/dashboard/volunteer/waste-portal">
-  <title>Redirecting… — WASTE2WORTH</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Campaigns — WASTE2WORTH</title>
+  <meta name="description" content="Find and register for upcoming cleanup campaigns in your area.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <script>window.location.replace('/dashboard/volunteer/waste-portal');</script>
+<div class="app-layout">
+  
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="material-icons-outlined">eco</span> WASTE2WORTH
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard/volunteer" class="nav-item active">
+        <span class="material-icons-outlined">event</span> Campaigns
+      </a>
+      <a href="/dashboard/volunteer/waste-portal" class="nav-item">
+        <span class="material-icons-outlined">recycling</span> Waste Portal
+      </a>
+      <a href="/dashboard/volunteer/product-story" class="nav-item">
+        <span class="material-icons-outlined">eco</span> Product Stories
+      </a>
+      <a href="/volunteer/scan" class="nav-item">
+        <span class="material-icons-outlined">qr_code_scanner</span> Scan QR Code
+      </a>
+      <div class="nav-section-title">My Profile</div>
+      <a href="/volunteer/profile" class="nav-item">
+        <span class="material-icons-outlined">manage_accounts</span> Volunteer Profile
+      </a>
+      <a href="/volunteer/register" class="nav-item">
+        <span class="material-icons-outlined">volunteer_activism</span> Register / Update
+      </a>
+      <div class="nav-section-title">Account</div>
+      <a href="#" id="logoutBtn" class="nav-item">
+        <span class="material-icons-outlined">logout</span> Logout
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">&copy; 2026 WASTE2WORTH</div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+    
+    <header class="header">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <div class="header-search">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" placeholder="Search campaigns..." aria-label="Search">
+      </div>
+      <div class="header-user">
+        <div class="green-points-badge">
+          <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+          <span class="green-points-value">0</span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">User</span>
+          <span class="user-role">Role</span>
+        </div>
+        <div class="user-avatar">U</div>
+      </div>
+    </header>
+
+    <main class="main-content">
+      <div class="page-header animate-fade-in">
+        <h1 class="page-title">Upcoming Cleanup Campaigns</h1>
+        <p class="page-subtitle">Join community-driven initiatives to clean our neighbourhoods and earn Green Points.</p>
+      </div>
+
+      <div class="card animate-slide-up">
+        <div class="card-header">
+          <h2 class="card-title">Available Campaigns</h2>
+        </div>
+        <div style="padding:var(--space-md);">
+          <div class="product-grid" id="campaignsFeed">
+            <div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/js/app.js" defer></script>
 </body>
 </html>

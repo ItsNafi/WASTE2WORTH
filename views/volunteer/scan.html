@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer - Scan Attendance</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #e8f5e9; display: flex; flex-direction: column; align-items: center; padding-top: 50px; margin: 0; }
+        .container { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 90%; }
+        h1 { color: #2e7d32; font-size: 22px; margin-bottom: 20px; }
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+        #result { margin-top: 20px; padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; margin-bottom: 15px; padding: 10px; border-radius: 6px; font-size: 14px;}
+        input[type="number"] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        button { background: #2e7d32; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; width: 100%; }
+        button:hover { background: #1b5e20; }
+    </style>
+    <!-- Include html5-qrcode library -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1>Scan Campaign QR</h1>
+    <div class="info">For testing purposes, enter your Volunteer ID before scanning.</div>
+    <input type="number" id="volunteerId" placeholder="Volunteer ID (e.g., 2)" value="2">
+    
+    <div id="reader"></div>
+    
+    <div id="result"></div>
+</div>
+
+<script>
+    async function onScanSuccess(decodedText, decodedResult) {
+        // Pause scanning to prevent multiple hits (fails silently on file uploads)
+        try { html5QrcodeScanner.pause(); } catch(e) {}
+        
+        const volunteerId = document.getElementById('volunteerId').value;
+        const resultDiv = document.getElementById('result');
+        
+        if (!volunteerId) {
+            showResult('Please enter your Volunteer ID first.', false);
+            return;
+        }
+
+        try {
+            showResult('Verifying attendance...', true, true);
+            
+            // Call the backend API
+            const response = await fetch('/api/attendance/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: decodedText, volunteerId: parseInt(volunteerId, 10) })
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                showResult(`Success! ${data.message} You earned ${data.pointsAwarded} Green Points!`, true);
+            } else {
+                showResult(data.error || 'Verification failed.', false);
+            }
+        } catch (error) {
+            console.error('Error verifying scan:', error);
+            showResult('A network error occurred. Please try again.', false);
+        }
+    }
+
+    function onScanFailure(error) {
+        // handle scan failure, usually better to ignore and keep scanning
+    }
+
+    // Initialize the built-in UI scanner which supports Camera Selection and File Upload
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: {width: 250, height: 250} },
+      /* verbose= */ false
+    );
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+    function showResult(message, isSuccess, isPending = false) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.innerText = message;
+        
+        if (isPending) {
+            resultDiv.className = 'info';
+        } else if (isSuccess) {
+            resultDiv.className = 'success';
+        } else {
+            resultDiv.className = 'error';
+        }
+    }
+</script>
+
+</body>
+</html>

@@ -5,7 +5,7 @@ const UserModel = {
   async findByEmail(email) {
     const cleanEmail = (email || '').trim().toLowerCase();
     const [rows] = await pool.execute(
-      'SELECT * FROM Users WHERE LOWER(email) = ?',
+      'SELECT * FROM Users WHERE email = ?',
       [cleanEmail]
     );
     return rows[0] || null;
