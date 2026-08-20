@@ -36,4 +36,4 @@ const uploadCraftPhotos = multer({ storage, fileFilter, limits }).fields([
   { name: 'afterPhoto',  maxCount: 1 }
 ]);
 
-module.exports = { uploadScrapPhoto, uploadCraftPhotos };
+module.exports = { uploadScrapPhoto, uploadCraftPhotos, uploadWastePhoto: uploadScrapPhoto };

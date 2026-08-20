@@ -29,30 +29,6 @@ const CampaignController = {
     }
   },
 
-  async scanQRAttendance(req, res) {
-    try {
-      const { campaignId, volunteerId, wasteCollectedKg } = req.body;
-      
-      // Mock validation for QR scan endpoint
-      if (!campaignId || !volunteerId) {
-        return res.status(400).json({ error: 'Missing scan data' });
-      }
-
-      await CampaignModel.logAttendanceAndWaste(campaignId, volunteerId, wasteCollectedKg || 0);
-
-      // Award points: Base 50 points for attending + points for waste collected
-      let pointsAwarded = 50;
-      if (wasteCollectedKg > 0) {
-        pointsAwarded += RewardEngine.calculatePoints(wasteCollectedKg, 'Other'); 
-      }
-      
-      await RewardEngine.addPointsToUser(volunteerId, pointsAwarded);
-
-      res.json({ message: `Attendance logged successfully. Awarded ${pointsAwarded} Green Points!` });
-    } catch (err) {
-      res.status(500).json({ error: 'Failed to log attendance via QR scan' });
-    }
-  }
 };
 
 module.exports = CampaignController;

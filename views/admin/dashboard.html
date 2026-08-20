@@ -21,6 +21,9 @@
         <a href="/dashboard/admin/volunteers" class="nav-item">
           <span class="material-icons-outlined">volunteer_activism</span> Volunteers
         </a>
+        <a href="/dashboard/admin/campaign-qr" class="nav-item">
+          <span class="material-icons-outlined">qr_code_2</span> Generate QR Code
+        </a>
         <div class="nav-section-title">Account</div>
         <a href="#" id="logoutBtn" class="nav-item">
           <span class="material-icons-outlined">logout</span> Logout
@@ -124,6 +127,17 @@
                 <tr><td colspan="5" class="text-center">No reports loaded.</td></tr>
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <div class="card mt-lg animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Scheduled Campaigns</h2>
+          </div>
+          <div style="padding:var(--space-md);">
+            <div class="product-grid" id="adminCampaignsFeed">
+              <div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>
+            </div>
           </div>
         </div>
 

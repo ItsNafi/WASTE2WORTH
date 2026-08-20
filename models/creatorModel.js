@@ -4,7 +4,7 @@ const CreatorModel = {
   /** Fetch creator profile details (excluding password) */
   async getProfileById(id) {
     const [rows] = await pool.execute(
-      'SELECT id, name, email, role, greenPoints, createdAt FROM Users WHERE id = ? AND role = "Creator"',
+      'SELECT id, name, email, `role`, greenPoints, createdAt FROM Users WHERE id = ? AND `role` = "Creator"',
       [id]
     );
     if (!rows[0]) return null;

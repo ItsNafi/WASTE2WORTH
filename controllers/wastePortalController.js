@@ -97,9 +97,12 @@ const WastePortalController = {
       const points = RewardEngine.calculatePoints(weight, category);
       await RewardEngine.addPointsToUser(req.user.id, points);
 
+      const user = await UserModel.findById(req.user.id);
+
       res.status(201).json({
         message: `Waste log created! +${points} Green Points awarded`,
-        log
+        log,
+        greenPoints: user ? user.greenPoints : 0
       });
     } catch (err) {
       console.error('createWasteLog error:', err);

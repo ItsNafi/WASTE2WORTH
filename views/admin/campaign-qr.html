@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Campaign QR Code - Admin View</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; max-width: 400px; width: 100%; }
+        h1 { color: #2c3e50; font-size: 24px; margin-bottom: 20px; }
+        #qr-container { margin: 20px 0; min-height: 256px; display: flex; justify-content: center; align-items: center; }
+        img { max-width: 100%; border-radius: 8px; }
+        input[type="text"] { width: 80%; padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 6px; }
+        button { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        button:hover { background: #219653; }
+        .error { color: #e74c3c; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Generate Campaign QR</h1>
+    <input type="text" id="campaignId" placeholder="Enter Campaign ID" value="1">
+    <button onclick="generateQR()">Generate QR Code</button>
+    
+    <div id="qr-container">
+        <!-- QR Code will be injected here -->
+        <p style="color: #7f8c8d;">QR code will appear here.</p>
+    </div>
+    <div id="error-message" class="error"></div>
+</div>
+
+<script>
+    async function generateQR() {
+        const campaignId = document.getElementById('campaignId').value;
+        const qrContainer = document.getElementById('qr-container');
+        const errorMessage = document.getElementById('error-message');
+        
+        qrContainer.innerHTML = '<p>Loading...</p>';
+        errorMessage.innerText = '';
+
+        if (!campaignId) {
+            errorMessage.innerText = 'Please enter a Campaign ID';
+            qrContainer.innerHTML = '';
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/campaigns/${campaignId}/qr-code`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                qrContainer.innerHTML = `<img src="${data.qrImage}" alt="Campaign QR Code">`;
+            } else {
+                errorMessage.innerText = data.error || 'Failed to generate QR code';
+                qrContainer.innerHTML = '';
+            }
+        } catch (error) {
+            console.error('Error fetching QR code:', error);
+            errorMessage.innerText = 'An error occurred while generating the QR code.';
+            qrContainer.innerHTML = '';
+        }
+    }
+</script>
+
+</body>
+</html>

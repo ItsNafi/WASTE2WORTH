@@ -44,3 +44,30 @@ CREATE TABLE IF NOT EXISTS Notifications (
   createdAt      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (userId) REFERENCES Users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- CAMPAIGN ATTENDANCE TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS campaign_attendance (
+  attendance_id   INT AUTO_INCREMENT PRIMARY KEY,
+  campaign_id     INT             NOT NULL,
+  volunteer_id    INT             NOT NULL,
+  scanned_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  points_awarded  INT             DEFAULT 0,
+  FOREIGN KEY (campaign_id) REFERENCES CleanupCampaigns(campaignId) ON DELETE CASCADE,
+  FOREIGN KEY (volunteer_id) REFERENCES Users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_attendance (campaign_id, volunteer_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================================
+-- GREEN SCORE LOGS TABLE
+-- ============================================================
+CREATE TABLE IF NOT EXISTS green_score_logs (
+  log_id          INT AUTO_INCREMENT PRIMARY KEY,
+  user_id         INT             NOT NULL,
+  points_earned   INT             NOT NULL,
+  activity_type   VARCHAR(100)    NOT NULL,
+  reference_id    INT             DEFAULT NULL,
+  created_at      TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES Users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
