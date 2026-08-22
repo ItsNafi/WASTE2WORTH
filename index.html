@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Environmental Certificates - WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/certificates.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/citizen" class="nav-item" id="certificateDashboardLink">
+          <span class="material-icons-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="/certificates" class="nav-item active">
+          <span class="material-icons-outlined">workspace_premium</span> My Certificates
+        </a>
+        <a href="/certificates/verify" class="nav-item">
+          <span class="material-icons-outlined">verified</span> Verify a Certificate
+        </a>
+        <div class="nav-section-title">Account</div>
+        <a href="#" id="certificateLogoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="certificate-sidebar-note">WASTE2WORTH achievement certificates recognize platform milestones and are not government credentials.</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper certificate-page">
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search certificate-header-label">
+          <span class="material-icons-outlined">forest</span>
+          Environmental Achievement Center
+        </div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" aria-hidden="true">stars</span>
+            <span class="green-points-value" id="certificateGreenPoints">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name" id="certificateUserName">User</span>
+            <span class="user-role" id="certificateUserRole">Role</span>
+          </div>
+          <div class="user-avatar" id="certificateUserAvatar">U</div>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <section class="certificate-hero animate-fade-in">
+          <div>
+            <span class="certificate-eyebrow">Your environmental record</span>
+            <h1>My Environmental Certificates</h1>
+            <p>Reach verified Green Point milestones to unlock WASTE2WORTH-issued achievement certificates.</p>
+          </div>
+          <div class="certificate-hero-mark" aria-hidden="true">
+            <span class="material-icons-outlined">workspace_premium</span>
+          </div>
+        </section>
+
+        <div id="certificateAlert" class="certificate-alert hidden" role="alert"></div>
+
+        <section class="certificate-summary animate-slide-up" aria-label="Certificate summary">
+          <div>
+            <span class="summary-label">Current Green Score</span>
+            <strong id="summaryGreenPoints">-</strong>
+          </div>
+          <div>
+            <span class="summary-label">Milestones Earned</span>
+            <strong id="summaryMilestones">-</strong>
+          </div>
+          <div>
+            <span class="summary-label">Certificates Issued</span>
+            <strong id="summaryCertificates">-</strong>
+          </div>
+        </section>
+
+        <section class="certificate-section animate-slide-up">
+          <div class="certificate-section-heading">
+            <div>
+              <h2>Achievement milestones</h2>
+              <p>Eligibility is checked against your live Green Point balance every time a certificate is issued.</p>
+            </div>
+            <a class="btn btn-outline" href="/certificates/verify">
+              <span class="material-icons-outlined">verified</span> Verify certificate ID
+            </a>
+          </div>
+
+          <div id="certificateGrid" class="certificate-grid" aria-live="polite">
+            <div class="certificate-loading">
+              <div class="spinner"></div>
+              <span>Checking your environmental milestones...</span>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <script src="/js/certificates.js" defer></script>
+</body>
+</html>

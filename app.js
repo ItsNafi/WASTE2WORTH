@@ -1,136 +1,888 @@
-require('dotenv').config();
-const express      = require('express');
-const cookieParser = require('cookie-parser');
-const path         = require('path');
-const fs           = require('fs');
+// WASTE2WORTH Client-Side Application Logic
 
-const authRoutes     = require('./routes/authRoutes');
-const scrapRoutes    = require('./routes/scrapRoutes');
-const bhangariRoutes = require('./routes/bhangariRoutes');
-const creatorRoutes  = require('./routes/creatorRoutes');
-const craftRoutes    = require('./routes/craftRoutes');
-const campaignRoutes = require('./routes/campaignRoutes');
-const pollutionRoutes = require('./routes/pollutionRoutes');
-const adminRoutes    = require('./routes/adminRoutes');
-const rewardRoutes   = require('./routes/rewardRoutes');
-const recyclingHistoryRoutes = require('./routes/recyclingHistoryRoutes');
-const paymentRoutes = require('./routes/paymentRoutes');
-const notificationRoutes = require('./routes/notificationRoutes');
-const volunteerRoutes    = require('./routes/volunteerRoutes');
-
-const { verifyToken } = require('./middleware/authMiddleware');
-
-const app = express();
-
-/* ── Middleware ──────────────────────────────────────────── */
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-/* ── View Helper (Server-Side HTML without Engine) ───────── */
-const serveView = (viewPath) => (req, res) => {
-  const absolutePath = path.join(__dirname, 'views', viewPath);
-  try {
-    const html = fs.readFileSync(absolutePath, 'utf8');
-    res.type('html').send(html);
-  } catch (err) {
-    console.error('View not found:', absolutePath, err.message);
-    res.status(404).send('<h2>404</h2><p>View not found.</p>');
+document.addEventListener('DOMContentLoaded', () => {
+  // ============================================================
+  // UTILITY FUNCTIONS
+  // ============================================================
+  
+  // Toast container setup
+  let toastContainer = document.getElementById('toast-container');
+  if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    document.body.appendChild(toastContainer);
   }
-};
 
-const jwt = require('jsonwebtoken');
+  window.showToast = (message, type = 'success') => {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    const icon = type === 'success' ? 'check_circle' : type === 'error' ? 'error' : 'info';
+    
+    toast.innerHTML = `
+      <span class="material-icons-outlined toast-icon">${icon}</span>
+      <span>${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => toast.classList.add('show'), 10);
+    
+    // Auto remove
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.remove(), 300);
+    }, 4000);
+  };
 
-/* ── Role Guards & Authenticated Redirects ───────────────── */
-const getDashboardRoute = (role) => {
-  if (!role) return '/storefront';
-  const r = role.toString().trim().toLowerCase();
-  if (r === 'citizen') return '/dashboard/citizen';
-  if (r === 'volunteer') return '/dashboard/volunteer';
-  if (r === 'bhangarishop' || r === 'bhangari') return '/dashboard/bhangari';
-  if (r === 'creator') return '/dashboard/creator';
-  if (r === 'admin') return '/dashboard/admin';
-  return '/storefront';
-};
-
-const redirectIfAuthenticated = (req, res, next) => {
-  const token = req.cookies?.token;
-  if (token) {
+  const apiCall = async (url, options = {}) => {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'w2w_super_secret_key_change_in_production');
-      if (decoded && decoded.role) {
-        return res.redirect(getDashboardRoute(decoded.role));
+      // Default headers for JSON (skip if FormData)
+      if (!options.body || !(options.body instanceof FormData)) {
+        options.headers = {
+          'Content-Type': 'application/json',
+          ...options.headers
+        };
+      }
+      
+      options.credentials = options.credentials || 'include';
+      const res = await fetch(url, options);
+      
+      // Attempt to parse JSON response
+      let data;
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        // If not JSON, it might be a redirect page or plain text error
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || 'An error occurred');
+        return text;
+      }
+
+      if (!res.ok) {
+        // If authentication/authorization issues, redirect to login
+        if (res.status === 401 || res.status === 403) {
+          if (!options.ignoreAuthError) {
+            showToast(data.error || 'Authentication required', 'error');
+            setTimeout(() => { window.location.href = '/login'; }, 700);
+          }
+          throw new Error(data.error || 'Authentication required');
+        }
+        throw new Error(data.error || 'API request failed');
+      }
+
+      return data;
+    } catch (err) {
+      showToast(err.message, 'error');
+      throw err;
+    }
+  };
+
+  const escapeHTML = (str) => {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g, tag => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[tag] || tag));
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  // ============================================================
+  // SIDEBAR & NAVIGATION
+  // ============================================================
+  
+  const sidebarToggle = document.getElementById('sidebarToggle');
+  const sidebar = document.querySelector('.sidebar');
+  
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      sidebar.classList.toggle('active');
+    });
+    
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 768 && sidebar.classList.contains('active') && !sidebar.contains(e.target)) {
+        sidebar.classList.remove('active');
+      }
+    });
+  }
+
+  // Highlight active nav item
+  const currentPath = window.location.pathname;
+  document.querySelectorAll('.nav-item').forEach(link => {
+    if (link.getAttribute('href') === currentPath) {
+      link.classList.add('active');
+    }
+  });
+
+  const ensureCertificatesNavLink = () => {
+    const nav = document.querySelector('.sidebar-nav');
+    if (!nav) return;
+
+    let link = document.getElementById('certificatesNavLink') ||
+      document.getElementById('downloadCertBtn');
+
+    if (!link) {
+      link = document.createElement('a');
+      const accountSection = nav.querySelector('.nav-section-title');
+      const accountLink = document.getElementById('logoutBtn') ||
+        document.getElementById('navAuthLink');
+      nav.insertBefore(link, accountSection || accountLink || null);
+    }
+
+    link.id = 'certificatesNavLink';
+    link.href = '/certificates';
+    link.className = `nav-item${currentPath === '/certificates' ? ' active' : ''}`;
+    link.innerHTML = '<span class="material-icons-outlined">workspace_premium</span> My Certificates';
+  };
+
+  // ============================================================
+  // AUTHENTICATION
+  // ============================================================
+
+  const loginForm = document.getElementById('loginForm');
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const btn = loginForm.querySelector('button[type="submit"]');
+      
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Signing in...';
+        
+        const res = await apiCall('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        
+        showToast(res.message, 'success');
+        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 500);
+      } catch (err) {
+        // Error already handled by apiCall
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In';
+      }
+    });
+  }
+
+  const registerForm = document.getElementById('registerForm');
+  if (registerForm) {
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const name = document.getElementById('name').value;
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const role = document.getElementById('role').value;
+      
+      if (password.length < 6) {
+        return showToast('Password must be at least 6 characters', 'error');
+      }
+      
+      const btn = registerForm.querySelector('button[type="submit"]');
+      
+      try {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Creating account...';
+        
+        const res = await apiCall('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ name, email, password, role })
+        });
+        
+        showToast(res.message, 'success');
+        if (res.redirect) setTimeout(() => window.location.href = res.redirect, 500);
+      } catch (err) {
+        // Error already handled
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Create Account';
+      }
+    });
+  }
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      try {
+        const res = await apiCall('/api/auth/logout');
+        window.location.href = res.redirect || '/login';
+      } catch (err) {}
+    });
+  }
+
+  // ============================================================
+  // USER INFO LOADING
+  // ============================================================
+  
+  const loadUserInfo = async (isPublic = false) => {
+    // Only load if elements exist on page
+    if (!document.querySelector('.user-name') && !document.getElementById('headerUser')) return;
+    
+    try {
+      const user = await apiCall('/api/auth/me', { ignoreAuthError: isPublic });
+      
+      // Reveal header user details if logged in
+      const headerUser = document.getElementById('headerUser');
+      if (headerUser) headerUser.style.display = 'flex';
+      
+      // Update sidebar links dynamically for logged-in user
+      const authLink = document.getElementById('navAuthLink');
+      if (authLink) {
+        authLink.innerHTML = '<span class="material-icons-outlined">logout</span> Logout';
+        authLink.id = 'logoutBtn'; // Hook up logout listener
+        authLink.addEventListener('click', async (e) => {
+          e.preventDefault();
+          try {
+            const res = await apiCall('/api/auth/logout');
+            window.location.href = res.redirect || '/login';
+          } catch (err) {}
+        });
+      }
+      
+      const dashboardLink = document.getElementById('navDashboardLink');
+      if (dashboardLink) {
+        let route = '/dashboard/citizen';
+        if (user.role === 'BhangariShop') route = '/dashboard/bhangari';
+        else if (user.role === 'Creator') route = '/dashboard/creator';
+        else if (user.role === 'Admin') route = '/dashboard/admin';
+        else if (user.role === 'Volunteer') route = '/dashboard/volunteer';
+        dashboardLink.href = route;
+      }
+
+      ensureCertificatesNavLink();
+
+      document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name);
+      document.querySelectorAll('.user-role').forEach(el => el.textContent = user.role);
+      document.querySelectorAll('.green-points-value').forEach(el => el.textContent = user.greenPoints || 0);
+      
+      const avatarStr = user.name.substring(0, 2).toUpperCase();
+      document.querySelectorAll('.user-avatar').forEach(el => el.textContent = avatarStr);
+      
+      const pointsStat = document.getElementById('statPoints');
+      if (pointsStat) pointsStat.textContent = user.greenPoints || 0;
+      
+    } catch (err) {
+      console.warn("User not logged in or failed to load user info:", err.message);
+    }
+  };
+
+  // Profile Upgrade Helper
+  window.upgradeRole = async (newRole) => {
+    if (!confirm(`Are you sure you want to apply/upgrade to ${newRole}?`)) return;
+    try {
+      const res = await apiCall('/api/auth/role', {
+        method: 'PUT',
+        body: JSON.stringify({ role: newRole })
+      });
+      showToast(res.message, 'success');
+      if (res.redirect) {
+        setTimeout(() => window.location.href = res.redirect, 1000);
+      } else {
+        loadUserInfo();
       }
     } catch (err) {
-      res.clearCookie('token', { path: '/' });
+      // Error handled by apiCall
     }
+  };
+
+  // Setup photo preview helper
+  const setupPhotoPreview = (inputId, previewId, zoneId) => {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const zone = document.getElementById(zoneId);
+    
+    if (!input || !preview) return;
+    
+    // Click zone to trigger input
+    if (zone) {
+      zone.addEventListener('click', () => input.click());
+      
+      // Drag & Drop
+      zone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        zone.classList.add('active');
+      });
+      zone.addEventListener('dragleave', () => zone.classList.remove('active'));
+      zone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        zone.classList.remove('active');
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          input.files = e.dataTransfer.files;
+          const event = new Event('change');
+          input.dispatchEvent(event);
+        }
+      });
+    }
+
+    input.addEventListener('change', function() {
+      if (this.files && this.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          let img = preview.querySelector('img');
+          if (!img) {
+            img = document.createElement('img');
+            preview.appendChild(img);
+          }
+          img.src = e.target.result;
+          preview.classList.add('has-image');
+        }
+        reader.readAsDataURL(this.files[0]);
+      }
+    });
+  };
+
+  // ============================================================
+  // CITIZEN: SCRAP LISTING
+  // ============================================================
+  
+  if (currentPath.includes('/citizen')) {
+    setupPhotoPreview('scrapPhoto', 'photoPreview', 'uploadZone');
+    
+    const scrapForm = document.getElementById('scrapForm');
+    if (scrapForm) {
+      scrapForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(scrapForm);
+        const btn = scrapForm.querySelector('button[type="submit"]');
+        
+        try {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Submitting...';
+          
+          await apiCall('/api/scrap', {
+            method: 'POST',
+            body: formData // Let fetch set boundary for multipart
+          });
+          
+          showToast('Scrap listing created! +10 Green Points', 'success');
+          scrapForm.reset();
+          document.getElementById('photoPreview').classList.remove('has-image');
+          
+          // Reload lists & user info (points update)
+          loadMyListings();
+          loadUserInfo();
+        } catch (err) {
+          // Handled
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons-outlined">add_circle</span> Submit Listing';
+        }
+      });
+    }
+
+    const loadMyListings = async () => {
+      const container = document.getElementById('myListings');
+      const statTotal = document.getElementById('statTotal');
+      const statActive = document.getElementById('statActive');
+      
+      if (!container) return;
+      
+      try {
+        const listings = await apiCall('/api/scrap/my');
+        
+        if (statTotal) statTotal.textContent = listings.length;
+        if (statActive) statActive.textContent = listings.filter(l => l.status === 'Available').length;
+        
+        if (listings.length === 0) {
+          container.innerHTML = `
+            <div class="empty-state animate-fade-in">
+              <span class="material-icons-outlined empty-state-icon">inventory_2</span>
+              <p class="empty-state-text">You haven't listed any scrap yet.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = `
+          <div class="table-responsive animate-fade-in">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Photo</th>
+                  <th>Category</th>
+                  <th>Weight</th>
+                  <th>Status</th>
+                  <th>Listed On</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${listings.map(item => `
+                  <tr>
+                    <td>
+                      ${item.photoUrl 
+                        ? `<img src="${item.photoUrl}" class="table-photo" alt="Scrap">` 
+                        : `<div class="table-photo" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;"><span class="material-icons-outlined">image</span></div>`
+                      }
+                    </td>
+                    <td style="font-weight:500;">${escapeHTML(item.category)}</td>
+                    <td>${item.weight} kg</td>
+                    <td><span class="status-pill" data-status="${item.status}">${item.status}</span></td>
+                    <td style="color:var(--color-text-secondary);">${formatDate(item.createdAt)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } catch (err) {
+        container.innerHTML = `<div class="form-error">Failed to load listings.</div>`;
+      }
+    };
+    
+    // Initial loads
+    loadUserInfo();
+    loadMyListings();
   }
-  next();
-};
 
-const requirePageRole = (role) => (req, res, next) => {
-  if (req.user && req.user.role === role) return next();
-  res.status(403).send('<h2>403 Forbidden</h2><p>Access denied for your role.</p><a href="/login">Back to Login</a>');
-};
+  // ============================================================
+  // BHANGARI: BUYING BOARD
+  // ============================================================
+  
+  if (currentPath.includes('/bhangari')) {
+    let allBoardListings = [];
+    
+    // Global purchase function attached to window so inline onclick works
+    window.purchaseScrap = async (listingId) => {
+      if(!confirm('Are you sure you want to purchase this scrap material?')) return;
+      
+      try {
+        await apiCall(`/api/bhangari/purchase/${listingId}`, { method: 'POST' });
+        showToast('Purchase successful! +15 Green Points', 'success');
+        loadBhangariBoard();
+        loadUserInfo();
+      } catch (err) {
+        // Handled
+      }
+    };
 
-/* ── Page Routes (HTML Views) ────────────────────────────── */
-app.get('/', redirectIfAuthenticated, (req, res) => res.redirect('/login'));
-app.get('/login', redirectIfAuthenticated, serveView('auth/login.html'));
-app.get('/register', redirectIfAuthenticated, serveView('auth/register.html'));
+    const renderBoardTable = (data) => {
+      const tbody = document.getElementById('bhangariBoard');
+      if (!tbody) return;
+      
+      if (data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center" style="padding:40px;color:var(--color-text-muted);">No listings found for this category.</td></tr>`;
+        return;
+      }
+      
+      tbody.innerHTML = data.map(item => `
+        <tr class="animate-fade-in">
+          <td>
+            ${item.photoUrl 
+              ? `<img src="${item.photoUrl}" class="table-photo" alt="Scrap">` 
+              : `<div class="table-photo" style="display:flex;align-items:center;justify-content:center;color:#94a3b8;"><span class="material-icons-outlined">image</span></div>`
+            }
+          </td>
+          <td>
+            <div style="font-weight:500;">${escapeHTML(item.ownerName)}</div>
+          </td>
+          <td>${escapeHTML(item.category)}</td>
+          <td style="font-weight:600;color:var(--color-primary);">${item.weight} kg</td>
+          <td><span class="status-pill" data-status="${item.status}">${item.status}</span></td>
+          <td style="color:var(--color-text-secondary);">${formatDate(item.createdAt)}</td>
+          <td>
+            ${item.status === 'Available' 
+              ? `<button class="btn btn-primary btn-sm" onclick="purchaseScrap(${item.listingId})">Buy Now</button>`
+              : `<button class="btn btn-ghost btn-sm" disabled>Sold Out</button>`
+            }
+          </td>
+        </tr>
+      `).join('');
+    };
 
-app.get('/dashboard/citizen', verifyToken, requirePageRole('Citizen'), serveView('citizen/scrapForm.html'));
-app.get('/dashboard/citizen/pollution', verifyToken, requirePageRole('Citizen'), serveView('citizen/pollutionForm.html'));
-app.get('/dashboard/bhangari', verifyToken, requirePageRole('BhangariShop'), serveView('bhangari/board.html'));
-app.get('/dashboard/creator', verifyToken, requirePageRole('Creator'), serveView('creator/rawMaterials.html'));
-app.get('/dashboard/creator/crafts/new', verifyToken, requirePageRole('Creator'), serveView('creator/craftForm.html'));
-app.get('/dashboard/volunteer', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/campaigns.html'));
-app.get('/dashboard/volunteer/waste-portal', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/wastePortal.html'));
-app.get('/dashboard/volunteer/product-story', verifyToken, requirePageRole('Volunteer'), serveView('volunteer/productStory.html'));
-app.get('/dashboard/admin', verifyToken, requirePageRole('Admin'), serveView('admin/dashboard.html'));
-app.get('/dashboard/admin/volunteers', verifyToken, requirePageRole('Admin'), serveView('admin/volunteers.html'));
-app.get('/dashboard/admin/complaints', verifyToken, requirePageRole('Admin'), serveView('admin/complaints.html'));
+    const loadBhangariBoard = async () => {
+      try {
+        allBoardListings = await apiCall('/api/bhangari/board');
+        
+        // Update stats
+        const statAvail = document.getElementById('statAvailable');
+        const statPurch = document.getElementById('statPurchased');
+        if (statAvail) statAvail.textContent = allBoardListings.filter(l => l.status === 'Available').length;
+        if (statPurch) statPurch.textContent = allBoardListings.filter(l => l.status === 'Sold').length;
+        
+        // Setup initial render
+        const activeChip = document.querySelector('.chip.active');
+        const activeCat = activeChip ? activeChip.dataset.cat : 'All';
+        filterBoard(activeCat);
+        
+      } catch (err) {
+        const tbody = document.getElementById('bhangariBoard');
+        if(tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center form-error">Failed to load board data.</td></tr>`;
+      }
+    };
 
-/* ── Volunteer Registration (any logged-in user) ─────────────── */
-app.get('/volunteer/register', verifyToken, serveView('volunteer/register.html'));
-app.get('/volunteer/profile',  verifyToken, serveView('volunteer/profile.html'));
+    const filterBoard = (category) => {
+      if (category === 'All') {
+        renderBoardTable(allBoardListings);
+      } else {
+        renderBoardTable(allBoardListings.filter(l => l.category === category));
+      }
+    };
 
-app.get('/storefront', serveView('storefront/crafts.html'));
-app.get('/creator-profile/:id', serveView('creator-profile.html'));
-app.get('/payments/transactions', verifyToken, serveView('payments/transactions.html'));
+    // Chip click listeners
+    document.querySelectorAll('.filter-chips .chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-chips .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        filterBoard(chip.dataset.cat);
+      });
+    });
 
-/* ── API Routes ──────────────────────────────────────────── */
-app.use('/api/auth',      authRoutes);
-app.use('/api/scrap',     scrapRoutes);
-app.use('/api/bhangari',  bhangariRoutes);
-app.use('/api/creator',   creatorRoutes);
-app.use('/api/crafts',    craftRoutes);
-app.use('/api/campaigns', campaignRoutes);
-app.use('/api/pollution', pollutionRoutes);
-app.use('/api/admin',     adminRoutes);
-app.use('/api/rewards',   rewardRoutes);
-app.use('/api/history',   recyclingHistoryRoutes);
-app.use('/api/payments',  paymentRoutes);
-app.use('/api/notifications', notificationRoutes);
-app.use('/api/volunteers',    volunteerRoutes);
-
-/* ── Global Error Handler ────────────────────────────────── */
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: err.message || 'Internal Server Error' });
-});
-
-/* ── 404 Handler ─────────────────────────────────────────── */
-app.use((req, res) => {
-  if (req.originalUrl && req.originalUrl.startsWith('/api/')) {
-    return res.status(404).json({ error: 'Not Found' });
+    loadUserInfo();
+    loadBhangariBoard();
   }
 
-  res.status(404).send('<h2>404 Not Found</h2><p>The page or API endpoint does not exist.</p>');
-});
+  // ============================================================
+  // CREATOR: RAW MATERIALS & CRAFTS
+  // ============================================================
+  
+  if (currentPath.includes('/creator')) {
+    
+    // Setup for raw materials view
+    if (document.getElementById('rawMaterialsFeed')) {
+      
+      window.secureMaterial = async (listingId) => {
+        try {
+          await apiCall(`/api/creator/purchase/${listingId}`, { method: 'POST' });
+          showToast('Material secured! +25 Green Points', 'success');
+          loadRawMaterials();
+          loadUserInfo();
+        } catch (err) {}
+      };
 
-/* ── Server Startup ──────────────────────────────────────── */
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`🚀 WASTE2WORTH server running on http://localhost:${PORT}`);
+      const loadRawMaterials = async () => {
+        const feed = document.getElementById('rawMaterialsFeed');
+        const statAvail = document.getElementById('statAvailable');
+        
+        try {
+          const listings = await apiCall('/api/creator/materials');
+          
+          if(statAvail) statAvail.textContent = listings.length;
+          
+          if(listings.length === 0) {
+            feed.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No available raw materials right now.</div>`;
+            return;
+          }
+          
+          feed.innerHTML = listings.map(item => `
+            <div class="product-card animate-fade-in">
+              <img src="${item.photoUrl || '/api/placeholder/400/300'}" class="product-card-image" alt="Scrap">
+              <div class="product-card-body">
+                <div style="display:flex; justify-content:space-between; align-items:start; margin-bottom:8px;">
+                  <h3 class="product-card-title">${escapeHTML(item.category)}</h3>
+                  <span class="inventory-badge" style="background:var(--color-primary-bg);color:var(--color-primary);">${item.weight} kg</span>
+                </div>
+                <div class="product-card-creator">Source: ${escapeHTML(item.ownerName)}</div>
+                
+                <div style="margin-top:auto; padding-top:16px;">
+                  <button class="btn btn-outline btn-block" onclick="secureMaterial(${item.listingId})">Secure Material</button>
+                </div>
+              </div>
+            </div>
+          `).join('');
+          
+        } catch (err) {
+          feed.innerHTML = `<div class="form-error">Failed to load materials.</div>`;
+        }
+      };
+      
+      loadRawMaterials();
+    }
+    
+    // Setup for create craft form
+    if (document.getElementById('craftForm')) {
+      setupPhotoPreview('beforePhoto', 'beforePreview', 'beforeZone');
+      setupPhotoPreview('afterPhoto', 'afterPreview', 'afterZone');
+      
+      const form = document.getElementById('craftForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const btn = form.querySelector('button[type="submit"]');
+        
+        try {
+          btn.disabled = true;
+          btn.innerHTML = '<span class="material-icons-outlined spin">sync</span> Listing...';
+          
+          await apiCall('/api/crafts', {
+            method: 'POST',
+            body: formData
+          });
+          
+          showToast('Upcycled craft listed successfully! +30 Points', 'success');
+          form.reset();
+          document.getElementById('beforePreview').classList.remove('has-image');
+          document.getElementById('afterPreview').classList.remove('has-image');
+          loadUserInfo();
+        } catch (err) {
+          // Handled
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons-outlined">storefront</span> List Craft on Store';
+        }
+      });
+    }
+
+    loadUserInfo();
+  }
+
+  // ============================================================
+  // STOREFRONT
+  // ============================================================
+  
+  if (currentPath === '/storefront' || currentPath === '/storefront/') {
+    
+    const loadStorefront = async () => {
+      const grid = document.getElementById('storefrontGrid');
+      if(!grid) return;
+      
+      try {
+        const crafts = await apiCall('/api/crafts');
+        
+        if (crafts.length === 0) {
+          grid.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No upcycled crafts available yet.</div>`;
+          return;
+        }
+        
+        grid.innerHTML = crafts.map(item => `
+          <div class="product-card animate-fade-in">
+            <div style="position:relative; overflow:hidden;" class="craft-img-container">
+              <img src="${item.afterPhotoUrl || '/api/placeholder/400/300'}" class="product-card-image" alt="${escapeHTML(item.title)}">
+              ${item.beforePhotoUrl ? `<div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.6); color:white; font-size:10px; padding:2px 8px; border-radius:10px; text-transform:uppercase;">Upcycled</div>` : ''}
+            </div>
+            <div class="product-card-body">
+              <h3 class="product-card-title">${escapeHTML(item.title)}</h3>
+              <div class="product-card-creator">By ${escapeHTML(item.creatorName)}</div>
+              
+              <div class="product-card-desc">
+                ${escapeHTML(item.description || 'No description provided.')}
+              </div>
+              
+              <div class="product-card-meta">
+                <div class="product-card-price">$${item.price}</div>
+                <div class="inventory-badge">${item.inventoryCount} in stock</div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        grid.innerHTML = `<div class="form-error">Failed to load storefront products.</div>`;
+      }
+    };
+    
+    loadStorefront();
+    loadUserInfo(true);
+  }
+
+  // ============================================================
+  // VOLUNTEER: CAMPAIGNS
+  // ============================================================
+  if (currentPath.includes('/volunteer')) {
+    const loadCampaigns = async () => {
+      const feed = document.getElementById('campaignsFeed');
+      if (!feed) return;
+      try {
+        const campaigns = await apiCall('/api/campaigns');
+        if (campaigns.length === 0) {
+          feed.innerHTML = `<div class="empty-state" style="grid-column: 1/-1;">No upcoming campaigns.</div>`;
+          return;
+        }
+        feed.innerHTML = campaigns.map(c => `
+          <div class="product-card animate-fade-in">
+            <div class="product-card-body">
+              <h3 class="product-card-title">${escapeHTML(c.title)}</h3>
+              <div class="product-card-creator">Date: ${formatDate(c.date)}</div>
+              <div class="product-card-desc">Zone: ${escapeHTML(c.boundaryZone)}</div>
+              <div class="product-card-meta">
+                <div>Volunteers: ${c.currentVolunteers}/${c.participantCap}</div>
+              </div>
+              <div style="margin-top:16px;">
+                <button class="btn btn-outline btn-block" onclick="registerCampaign(${c.campaignId})">Register</button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        feed.innerHTML = `<div class="form-error">Failed to load campaigns.</div>`;
+      }
+    };
+
+    window.registerCampaign = async (id) => {
+      try {
+        await apiCall(`/api/campaigns/${id}/register`, { method: 'POST' });
+        showToast('Registered successfully!', 'success');
+        loadCampaigns();
+      } catch (err) {}
+    };
+
+    const mockScanBtn = document.getElementById('mockScanBtn');
+    if (mockScanBtn) {
+      mockScanBtn.addEventListener('click', async () => {
+        const campaignId = prompt('Enter Campaign ID you are attending:');
+        if (!campaignId) return;
+        const wasteKg = prompt('Enter Waste Collected in KG (optional):', '0');
+        
+        // Need volunteer ID, but API will get it from req.user
+        // So we just send campaignId and wasteCollectedKg
+        const volunteerId = 999; // API uses req.user.id instead, so we just pass dummy if needed or API will handle.
+        // Wait, campaign scan route expects volunteerId in body?
+        // Let's pass it if needed, or rely on req.user.
+        // Wait, the API requires volunteerId in body. Let's just fetch it from profile.
+        const user = await apiCall('/api/auth/me');
+
+        try {
+          const res = await apiCall('/api/campaigns/scan', {
+            method: 'POST',
+            body: JSON.stringify({ campaignId: parseInt(campaignId), volunteerId: user.id, wasteCollectedKg: parseFloat(wasteKg) })
+          });
+          showToast(res.message, 'success');
+          loadUserInfo();
+        } catch(err) {}
+      });
+    }
+
+    loadUserInfo();
+    loadCampaigns();
+  }
+
+  // ============================================================
+  // CITIZEN: POLLUTION COMPLAINTS
+  // ============================================================
+  if (currentPath.includes('/citizen/pollution')) {
+    setupPhotoPreview('scrapPhoto', 'photoPreview', 'uploadZone');
+    
+    const form = document.getElementById('pollutionForm');
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const btn = form.querySelector('button[type="submit"]');
+        try {
+          btn.disabled = true;
+          btn.innerHTML = 'Submitting...';
+          const res = await apiCall('/api/pollution', { method: 'POST', body: formData });
+          showToast(res.message, 'success');
+          form.reset();
+          document.getElementById('photoPreview').classList.remove('has-image');
+          loadReports();
+          loadUserInfo();
+        } catch (err) {} finally {
+          btn.disabled = false;
+          btn.innerHTML = '<span class="material-icons-outlined">send</span> Submit Report';
+        }
+      });
+    }
+
+    const loadReports = async () => {
+      const tbody = document.getElementById('myPollutionReports');
+      if (!tbody) return;
+      try {
+        const reports = await apiCall('/api/pollution/my');
+        if (reports.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" class="text-center">No reports yet.</td></tr>`;
+          return;
+        }
+        tbody.innerHTML = reports.map(r => `
+          <tr>
+            <td>${escapeHTML(r.locationPin)}</td>
+            <td><span class="status-pill">${r.status}</span></td>
+            <td>${formatDate(r.createdAt)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {}
+    };
+
+    loadUserInfo();
+    loadReports();
+  }
+
+  // ============================================================
+  // ADMIN DASHBOARD
+  // ============================================================
+  if (currentPath.includes('/admin')) {
+    const loadAdminDashboard = async () => {
+      try {
+        const data = await apiCall('/api/admin/dashboard');
+        
+        // Prices
+        const pTbody = document.getElementById('priceDirectoryTbody');
+        if (pTbody) {
+          pTbody.innerHTML = data.prices.map(p => `
+            <tr>
+              <td>${escapeHTML(p.categoryName)}</td>
+              <td><input type="number" step="0.01" class="form-input" style="width:100px; padding:4px;" value="${p.pricePerKg}" id="price-${p.categoryId}"></td>
+              <td><button class="btn btn-sm btn-primary" onclick="updatePrice(${p.categoryId})">Update</button></td>
+            </tr>
+          `).join('');
+        }
+        
+        // Pollution
+        const rTbody = document.getElementById('pollutionAdminTbody');
+        if (rTbody) {
+          if (data.complaints.length === 0) {
+            rTbody.innerHTML = `<tr><td colspan="5" class="text-center">No reports loaded.</td></tr>`;
+          } else {
+            rTbody.innerHTML = data.complaints.map(c => `
+              <tr>
+                <td>${escapeHTML(c.citizenName)}</td>
+                <td>${escapeHTML(c.locationPin)}</td>
+                <td>${escapeHTML(c.description)}</td>
+                <td><span class="status-pill">${c.status}</span></td>
+                <td>${formatDate(c.createdAt)}</td>
+              </tr>
+            `).join('');
+          }
+        }
+      } catch (err) {}
+    };
+
+    window.updatePrice = async (id) => {
+      const val = document.getElementById(`price-${id}`).value;
+      try {
+        await apiCall(`/api/admin/prices/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify({ pricePerKg: val })
+        });
+        showToast('Price updated successfully');
+      } catch (err) {}
+    };
+
+    const campaignForm = document.getElementById('adminCampaignForm');
+    if (campaignForm) {
+      campaignForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const body = {
+          title: document.getElementById('campaignTitle').value,
+          date: document.getElementById('campaignDate').value,
+          participantCap: document.getElementById('campaignCap').value,
+          boundaryZone: document.getElementById('campaignZone').value
+        };
+        try {
+          await apiCall('/api/admin/campaigns', { method: 'POST', body: JSON.stringify(body) });
+          showToast('Campaign launched successfully!', 'success');
+          campaignForm.reset();
+        } catch (err) {}
+      });
+    }
+
+    loadUserInfo();
+    loadAdminDashboard();
+  }
+
+  // Certificate Download Helper
+  const downloadCertBtn = document.getElementById('downloadCertBtn');
+  if (downloadCertBtn) {
+    downloadCertBtn.href = '/certificates';
+  }
+
 });

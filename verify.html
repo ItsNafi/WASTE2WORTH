@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Environmental Certificate - WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/certificates.css">
+</head>
+<body class="verification-page">
+  <header class="verification-topbar">
+    <a href="/" class="verification-brand">
+      <span class="material-icons-outlined">eco</span> WASTE2WORTH
+    </a>
+    <a href="/certificates" class="btn btn-outline">My Certificates</a>
+  </header>
+
+  <main class="verification-shell">
+    <section class="verification-intro">
+      <span class="certificate-eyebrow">Certificate authenticity</span>
+      <h1>Verify a WASTE2WORTH certificate</h1>
+      <p>Enter the certificate ID printed on the PDF to confirm its recipient, milestone, score at issuance, and issue date.</p>
+
+      <form id="verificationForm" class="verification-form">
+        <label for="certificateId">Certificate ID</label>
+        <div class="verification-input-row">
+          <input
+            id="certificateId"
+            class="form-input"
+            type="text"
+            autocomplete="off"
+            spellcheck="false"
+            placeholder="W2W-2026-XXXXXXXXXXXX"
+            maxlength="32"
+            required
+          >
+          <button type="submit" class="btn btn-primary">
+            <span class="material-icons-outlined">verified</span> Verify
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <section id="verificationResult" class="verification-result" aria-live="polite">
+      <div class="verification-placeholder">
+        <span class="material-icons-outlined">workspace_premium</span>
+        <h2>Ready to verify</h2>
+        <p>A valid ID begins with W2W and is recorded by the platform when an earned certificate is first issued.</p>
+      </div>
+    </section>
+
+    <p class="verification-disclaimer">WASTE2WORTH certificates recognize achievements within this platform. They are not legal, regulatory, or government certifications.</p>
+  </main>
+
+  <script src="/js/certificateVerification.js" defer></script>
+</body>
+</html>
