@@ -1,10 +1,12 @@
 const pool = require('../config/db');
 
 const PollutionModel = {
-  async create({ citizenId, locationPin, description, photoUrl }) {
+  async create({ citizenId, locationPin, description, photoUrl, latitude, longitude }) {
     const [result] = await pool.execute(
-      'INSERT INTO PollutionComplaints (citizenId, locationPin, description, photoUrl) VALUES (?, ?, ?, ?)',
-      [citizenId, locationPin, description, photoUrl || null]
+      `INSERT INTO PollutionComplaints
+         (citizenId, locationPin, description, photoUrl, latitude, longitude)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [citizenId, locationPin, description, photoUrl || null, latitude, longitude]
     );
     return result.insertId;
   },
@@ -28,19 +30,7 @@ const PollutionModel = {
   },
 
   async updateStatus(complaintId, status) {
-    const [result] = await pool.execute(
-      'UPDATE PollutionComplaints SET status = ? WHERE complaintId = ?',
-      [status, complaintId]
-    );
-    return result.affectedRows > 0;
-  },
-
-  async delete(complaintId) {
-    const [result] = await pool.execute(
-      'DELETE FROM PollutionComplaints WHERE complaintId = ?',
-      [complaintId]
-    );
-    return result.affectedRows > 0;
+    await pool.execute('UPDATE PollutionComplaints SET status = ? WHERE complaintId = ?', [status, complaintId]);
   }
 };
 

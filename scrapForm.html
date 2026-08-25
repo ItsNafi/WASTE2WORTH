@@ -19,9 +19,6 @@
         <a href="/dashboard/citizen" class="nav-item active">
           <span class="material-icons-outlined">home</span> Dashboard
         </a>
-        <a href="/dashboard/citizen/pollution" class="nav-item">
-          <span class="material-icons-outlined">report_problem</span> Report Pollution
-        </a>
         <a href="/storefront" class="nav-item">
           <span class="material-icons-outlined">storefront</span> Storefront
         </a>
@@ -112,6 +109,37 @@
               <div class="form-group">
                 <label class="form-label" for="weight">Weight (kg)</label>
                 <input type="number" id="weight" name="weight" step="0.01" class="form-input" placeholder="e.g., 2.5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Listing Location</label>
+                <button type="button" class="btn btn-outline btn-block" id="scrapUseLocation">
+                  <span class="material-icons-outlined">my_location</span> Use My Current Location
+                </button>
+                <div class="form-row" style="margin-top: var(--space-sm); gap: var(--space-sm);">
+                  <input
+                    type="number"
+                    id="scrapLatitude"
+                    name="latitude"
+                    class="form-input"
+                    min="-90"
+                    max="90"
+                    step="any"
+                    placeholder="Latitude"
+                    aria-label="Listing latitude"
+                  >
+                  <input
+                    type="number"
+                    id="scrapLongitude"
+                    name="longitude"
+                    class="form-input"
+                    min="-180"
+                    max="180"
+                    step="any"
+                    placeholder="Longitude"
+                    aria-label="Listing longitude"
+                  >
+                </div>
+                <span class="form-hint" id="scrapLocationStatus">Add coordinates so this listing contributes to the heat map.</span>
               </div>
               <div class="form-group">
                 <label class="form-label">Photo (Optional)</label>
