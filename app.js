@@ -93,6 +93,46 @@ document.addEventListener('DOMContentLoaded', () => {
     return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
+  const setupGeolocation = ({ buttonId, latitudeId, longitudeId, statusId }) => {
+    const button = document.getElementById(buttonId);
+    const latitudeInput = document.getElementById(latitudeId);
+    const longitudeInput = document.getElementById(longitudeId);
+    const status = document.getElementById(statusId);
+    if (!button || !latitudeInput || !longitudeInput || !status) return;
+
+    const updateManualStatus = () => {
+      if (latitudeInput.value && longitudeInput.value) {
+        status.textContent = 'Coordinates ready. You can edit them before submitting.';
+      }
+    };
+
+    latitudeInput.addEventListener('input', updateManualStatus);
+    longitudeInput.addEventListener('input', updateManualStatus);
+
+    button.addEventListener('click', () => {
+      if (!navigator.geolocation) {
+        status.textContent = 'Automatic location is unavailable. Enter latitude and longitude manually.';
+        return;
+      }
+
+      button.disabled = true;
+      status.textContent = 'Requesting your current location…';
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          latitudeInput.value = position.coords.latitude.toFixed(6);
+          longitudeInput.value = position.coords.longitude.toFixed(6);
+          status.textContent = `Location captured (about ${Math.round(position.coords.accuracy)} m accuracy).`;
+          button.disabled = false;
+        },
+        () => {
+          status.textContent = 'Location could not be captured. Allow location access or enter coordinates manually.';
+          button.disabled = false;
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    });
+  };
+
   // ============================================================
   // SIDEBAR & NAVIGATION
   // ============================================================
@@ -141,6 +181,27 @@ document.addEventListener('DOMContentLoaded', () => {
     link.href = '/certificates';
     link.className = `nav-item${currentPath === '/certificates' ? ' active' : ''}`;
     link.innerHTML = '<span class="material-icons-outlined">workspace_premium</span> My Certificates';
+  };
+
+  const ensureHeatMapNavLink = () => {
+    const nav = document.querySelector('.sidebar-nav');
+    if (!nav) return;
+
+    let link = document.getElementById('heatMapNavLink') ||
+      nav.querySelector('a[href="/dashboard/heat-map"]');
+
+    if (!link) {
+      link = document.createElement('a');
+      const accountSection = nav.querySelector('.nav-section-title');
+      const accountLink = document.getElementById('logoutBtn') ||
+        document.getElementById('navAuthLink');
+      nav.insertBefore(link, accountSection || accountLink || null);
+    }
+
+    link.id = 'heatMapNavLink';
+    link.href = '/dashboard/heat-map';
+    link.className = `nav-item${currentPath === '/dashboard/heat-map' ? ' active' : ''}`;
+    link.innerHTML = '<span class="material-icons-outlined">map</span> Waste Heat Map';
   };
 
   // ============================================================
@@ -261,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       ensureCertificatesNavLink();
+      ensureHeatMapNavLink();
 
       document.querySelectorAll('.user-name').forEach(el => el.textContent = user.name);
       document.querySelectorAll('.user-role').forEach(el => el.textContent = user.role);
@@ -351,6 +413,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const scrapForm = document.getElementById('scrapForm');
     if (scrapForm) {
+      setupGeolocation({
+        buttonId: 'scrapUseLocation',
+        latitudeId: 'scrapLatitude',
+        longitudeId: 'scrapLongitude',
+        statusId: 'scrapLocationStatus'
+      });
+
       scrapForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const formData = new FormData(scrapForm);
@@ -368,6 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast('Scrap listing created! +10 Green Points', 'success');
           scrapForm.reset();
           document.getElementById('photoPreview').classList.remove('has-image');
+          const locationStatus = document.getElementById('scrapLocationStatus');
+          if (locationStatus) locationStatus.textContent = 'Add coordinates so this listing contributes to the heat map.';
           
           // Reload lists & user info (points update)
           loadMyListings();
@@ -760,6 +831,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   if (currentPath.includes('/citizen/pollution')) {
     setupPhotoPreview('scrapPhoto', 'photoPreview', 'uploadZone');
+    setupGeolocation({
+      buttonId: 'pollutionUseLocation',
+      latitudeId: 'pollutionLatitude',
+      longitudeId: 'pollutionLongitude',
+      statusId: 'pollutionLocationStatus'
+    });
     
     const form = document.getElementById('pollutionForm');
     if (form) {
@@ -774,6 +851,8 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast(res.message, 'success');
           form.reset();
           document.getElementById('photoPreview').classList.remove('has-image');
+          const locationStatus = document.getElementById('pollutionLocationStatus');
+          if (locationStatus) locationStatus.textContent = 'Add coordinates so this report contributes to the heat map.';
           loadReports();
           loadUserInfo();
         } catch (err) {} finally {
@@ -880,6 +959,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Certificate Download Helper
+  if (currentPath === '/dashboard/heat-map') {
+    loadUserInfo();
+  }
+
   const downloadCertBtn = document.getElementById('downloadCertBtn');
   if (downloadCertBtn) {
     downloadCertBtn.href = '/certificates';

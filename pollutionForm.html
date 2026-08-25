@@ -66,12 +66,43 @@
                 <input type="text" id="locationPin" name="locationPin" class="form-input" required>
               </div>
               <div class="form-group">
+                <label class="form-label">Map Coordinates</label>
+                <button type="button" class="btn btn-outline btn-block" id="pollutionUseLocation">
+                  <span class="material-icons-outlined">my_location</span> Use My Current Location
+                </button>
+                <div class="form-row" style="margin-top: var(--space-sm); gap: var(--space-sm);">
+                  <input
+                    type="number"
+                    id="pollutionLatitude"
+                    name="latitude"
+                    class="form-input"
+                    min="-90"
+                    max="90"
+                    step="any"
+                    placeholder="Latitude"
+                    aria-label="Complaint latitude"
+                  >
+                  <input
+                    type="number"
+                    id="pollutionLongitude"
+                    name="longitude"
+                    class="form-input"
+                    min="-180"
+                    max="180"
+                    step="any"
+                    placeholder="Longitude"
+                    aria-label="Complaint longitude"
+                  >
+                </div>
+                <span class="form-hint" id="pollutionLocationStatus">Add coordinates so this report contributes to the heat map.</span>
+              </div>
+              <div class="form-group">
                 <label class="form-label">Description</label>
                 <textarea id="description" name="description" class="form-textarea" required></textarea>
               </div>
               <div class="form-group">
-                <label class="form-label">Photo Evidence</label>
-                <input type="file" id="scrapPhoto" name="photo" accept="image/*" class="hidden" required>
+                <label class="form-label">Photo Evidence (Optional)</label>
+                <input type="file" id="scrapPhoto" name="photo" accept="image/*" class="hidden">
                 <div class="upload-zone" id="uploadZone">
                   <div class="upload-preview" id="photoPreview"></div>
                   <div class="upload-content">
