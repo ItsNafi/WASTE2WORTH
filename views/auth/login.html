@@ -10,7 +10,40 @@
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
-  <div class="auth-page">
+  <div class="auth-page" style="flex-direction: column; align-items: center; padding: 2rem 0; height: auto; min-height: 100vh;">
+  <!-- IMPACT DASHBOARD PREVIEW -->
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <div class="dashboard-container" style="transform: scale(0.9); margin-bottom: 2rem;">
+      <header class="dashboard-header" style="margin-bottom: 1rem;">
+          <h1 id="title-en" class="lang-en active" style="font-size: 1.8rem;">Real-Time Environmental Impact</h1>
+          <h1 id="title-bn" class="lang-bn" style="font-size: 1.8rem;">রিয়েল-টাইম পরিবেশগত প্রভাব</h1>
+          <div class="lang-toggle" style="position: static; justify-content: center; margin-top: 10px;">
+              <button id="btn-en" class="active" onclick="toggleLanguage('en')">EN</button>
+              <button id="btn-bn" onclick="toggleLanguage('bn')">বাং</button>
+          </div>
+      </header>
+
+      <main class="metrics-grid" style="gap: 1rem;">
+          <div class="metric-card" style="padding: 1rem;">
+              <div class="metric-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">♻️</div>
+              <h3 id="label-waste-en" class="lang-en active" style="font-size: 0.9rem;">Total Waste Diverted</h3>
+              <h3 id="label-waste-bn" class="lang-bn" style="font-size: 0.9rem;">মোট বর্জ্য সরানো হয়েছে</h3>
+              <div class="metric-value" id="val-waste" style="font-size: 2rem;">0 <span class="unit" style="font-size: 1rem;">kg</span></div>
+          </div>
+          <div class="metric-card" style="padding: 1rem;">
+              <div class="metric-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">⏱️</div>
+              <h3 id="label-hours-en" class="lang-en active" style="font-size: 0.9rem;">Total Volunteer Hours</h3>
+              <h3 id="label-hours-bn" class="lang-bn" style="font-size: 0.9rem;">স্বেচ্ছাসেবকদের মোট সময়</h3>
+              <div class="metric-value" id="val-hours" style="font-size: 2rem;">0 <span class="unit" style="font-size: 1rem;">hrs</span></div>
+          </div>
+          <div class="metric-card" style="padding: 1rem;">
+              <div class="metric-icon" style="font-size: 2rem; margin-bottom: 0.5rem;">৳</div>
+              <h3 id="label-revenue-en" class="lang-en active" style="font-size: 0.9rem;">Green Revenue Distributed</h3>
+              <h3 id="label-revenue-bn" class="lang-bn" style="font-size: 0.9rem;">সবুজ রাজস্ব বিতরণ</h3>
+              <div class="metric-value" id="val-revenue" style="font-size: 2rem;">0 <span class="unit" style="font-size: 1rem;">BDT</span></div>
+          </div>
+      </main>
+  </div>
     <div class="auth-card animate-slide-up">
       <div class="auth-brand">
         <span class="material-icons-outlined" style="font-size:48px;color:var(--color-primary)">eco</span>
@@ -43,5 +76,7 @@
     </div>
   </div>
   <script src="/js/app.js" defer></script>
+<script src="/js/dashboard.js" defer></script>
 </body>
 </html>
+
