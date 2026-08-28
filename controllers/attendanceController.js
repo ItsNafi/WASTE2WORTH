@@ -94,13 +94,21 @@ exports.scanAttendance = async (req, res) => {
             return res.status(400).json({ error: 'Volunteer is not registered for this campaign.' });
         }
 
+        // Determine hours attended (custom override or default to campaign duration)
+        let finalHours = req.body.hoursAttended !== undefined && req.body.hoursAttended !== null
+            ? parseFloat(req.body.hoursAttended)
+            : null;
+        if (finalHours === null || isNaN(finalHours)) {
+            finalHours = campaigns[0].durationHours !== null ? parseFloat(campaigns[0].durationHours) : 3.0;
+        }
+
         // Deduplication: Try to insert attendance record.
         // The unique constraint (campaign_id, volunteer_id) will throw ER_DUP_ENTRY if already scanned.
         try {
             await db.query(
-                `INSERT INTO campaign_attendance (campaign_id, volunteer_id, points_awarded) 
-                 VALUES (?, ?, ?)`,
-                [campaignId, userId, POINTS_PER_ATTENDANCE]
+                `INSERT INTO campaign_attendance (campaign_id, volunteer_id, points_awarded, hoursAttended) 
+                 VALUES (?, ?, ?, ?)`,
+                [campaignId, userId, POINTS_PER_ATTENDANCE, finalHours]
             );
         } catch (dbError) {
             if (dbError.code === 'ER_DUP_ENTRY') {

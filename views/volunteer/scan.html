@@ -27,6 +27,9 @@
     <div class="info">For testing purposes, enter your Volunteer ID before scanning.</div>
     <input type="number" id="volunteerId" placeholder="Volunteer ID (e.g., 2)" value="2">
     
+    <div class="info" style="margin-top: 10px;">Optional: Override Hours Attended. Leave blank for campaign default.</div>
+    <input type="number" step="0.5" id="hoursAttended" placeholder="Hours (e.g., 1.5)" value="">
+    
     <div id="reader"></div>
     
     <div id="result"></div>
@@ -38,6 +41,7 @@
         try { html5QrcodeScanner.pause(); } catch(e) {}
         
         const volunteerId = document.getElementById('volunteerId').value;
+        const hoursOverride = document.getElementById('hoursAttended').value;
         const resultDiv = document.getElementById('result');
         
         if (!volunteerId) {
@@ -48,11 +52,16 @@
         try {
             showResult('Verifying attendance...', true, true);
             
+            const payload = { token: decodedText, volunteerId: parseInt(volunteerId, 10) };
+            if (hoursOverride) {
+                payload.hoursAttended = parseFloat(hoursOverride);
+            }
+
             // Call the backend API
             const response = await fetch('/api/attendance/scan', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: decodedText, volunteerId: parseInt(volunteerId, 10) })
+                body: JSON.stringify(payload)
             });
             
             const data = await response.json();

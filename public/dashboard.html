@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Waste2Worth - Real-Time Impact Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1 id="title-en" class="lang-en active">Real-Time Environmental Impact Dashboard</h1>
+            <h1 id="title-bn" class="lang-bn">রিয়েল-টাইম পরিবেশগত প্রভাব ড্যাশবোর্ড</h1>
+            <div class="lang-toggle">
+                <button id="btn-en" class="active" onclick="toggleLanguage('en')">EN</button>
+                <button id="btn-bn" onclick="toggleLanguage('bn')">বাং</button>
+            </div>
+            <p id="subtitle-en" class="lang-en active">Aggregating platform-wide contributions from all citizens across Dhaka.</p>
+            <p id="subtitle-bn" class="lang-bn">ঢাকা জুড়ে সকল নাগরিকের প্ল্যাটফর্ম-ব্যাপী অবদান একত্রিত করা হচ্ছে।</p>
+        </header>
+
+        <main class="metrics-grid">
+            <!-- Metric 1: Total Waste Diverted -->
+            <div class="metric-card">
+                <div class="metric-icon">♻️</div>
+                <h3 id="label-waste-en" class="lang-en active">Total Waste Diverted</h3>
+                <h3 id="label-waste-bn" class="lang-bn">মোট বর্জ্য সরানো হয়েছে</h3>
+                <div class="metric-value" id="val-waste">0 <span class="unit">kg</span></div>
+            </div>
+
+            <!-- Metric 2: Total Volunteer Hours -->
+            <div class="metric-card">
+                <div class="metric-icon">⏱️</div>
+                <h3 id="label-hours-en" class="lang-en active">Total Volunteer Hours</h3>
+                <h3 id="label-hours-bn" class="lang-bn">স্বেচ্ছাসেবকদের মোট সময়</h3>
+                <div class="metric-value" id="val-hours">0 <span class="unit">hrs</span></div>
+            </div>
+
+            <!-- Metric 3: Total Green Revenue -->
+            <div class="metric-card">
+                <div class="metric-icon">৳</div>
+                <h3 id="label-revenue-en" class="lang-en active">Green Revenue Distributed</h3>
+                <h3 id="label-revenue-bn" class="lang-bn">সবুজ রাজস্ব বিতরণ</h3>
+                <div class="metric-value" id="val-revenue">0 <span class="unit">BDT</span></div>
+            </div>
+        </main>
+        
+        <div class="live-indicator">
+            <span class="dot"></span>
+            <span id="live-text-en" class="lang-en active">Live Updates Every 10s</span>
+            <span id="live-text-bn" class="lang-bn">প্রতি ১০ সেকেন্ডে লাইভ আপডেট</span>
+        </div>
+    </div>
+
+    <script src="/js/dashboard.js"></script>
+</body>
+</html>
