@@ -8,7 +8,7 @@ const { uploadWastePhoto }  = require('../middleware/uploadMiddleware');
 const driveRouter = express.Router();
 
 
-driveRouter.post('/', verifyToken, requireRole('Volunteer', 'Admin'), WastePortalController.createDrive);
+driveRouter.post('/', verifyToken, requireRole('Admin'), WastePortalController.createDrive);
 
 driveRouter.get('/',  verifyToken, WastePortalController.getDrives);
 
@@ -16,7 +16,7 @@ driveRouter.get('/',  verifyToken, WastePortalController.getDrives);
 const wasteLogRouter = express.Router();
 
 
-wasteLogRouter.post('/', verifyToken, requireRole('Volunteer'), uploadWastePhoto, WastePortalController.createWasteLog);
+wasteLogRouter.post('/', verifyToken, requireRole('Admin'), uploadWastePhoto, WastePortalController.createWasteLog);
 
 wasteLogRouter.get('/',  verifyToken, WastePortalController.getWasteLogs);
 
@@ -28,8 +28,8 @@ wasteRequestRouter.post('/',    verifyToken, requireRole('Citizen'),            
 
 wasteRequestRouter.get('/my',   verifyToken, requireRole('Citizen'),            WastePortalController.getMyRequests);
 
-wasteRequestRouter.get('/incoming', verifyToken, requireRole('Volunteer'),      WastePortalController.getIncomingRequests);
+wasteRequestRouter.get('/incoming', verifyToken, requireRole('Admin'),          WastePortalController.getIncomingRequests);
 
-wasteRequestRouter.patch('/:id', verifyToken,                                   WastePortalController.updateWasteRequest);
+wasteRequestRouter.patch('/:id', verifyToken, requireRole('Admin'),             WastePortalController.updateWasteRequest);
 
 module.exports = { driveRouter, wasteLogRouter, wasteRequestRouter };

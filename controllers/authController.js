@@ -1,18 +1,25 @@
-const bcrypt    = require('bcryptjs');
-const jwt       = require('jsonwebtoken');
-const UserModel = require('../models/userModel');
+const bcrypt         = require('bcryptjs');
+const jwt            = require('jsonwebtoken');
+const UserModel      = require('../models/userModel');
+const VolunteerModel = require('../models/volunteerModel');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'w2w_super_secret_key_change_in_production';
 
 /* ── Role → dashboard redirect helper ───────────────────── */
-function getRedirectUrl(role) {
+async function getRedirectUrl(role, userId) {
   if (!role) return '/storefront';
   const r = role.toString().trim().toLowerCase();
   if (r === 'citizen') return '/dashboard/citizen';
-  if (r === 'volunteer') return '/dashboard/volunteer';
+  if (r === 'volunteer') {
+    if (userId) {
+      const profile = await VolunteerModel.findByUserId(userId);
+      return profile ? '/volunteer/profile' : '/volunteer/register';
+    }
+    return '/volunteer/register';
+  }
   if (r === 'bhangarishop' || r === 'bhangari') return '/dashboard/bhangari';
   if (r === 'creator') return '/dashboard/creator';
-  if (r === 'admin') return '/dashboard/admin';
+  if (r === 'admin') return '/dashboard/admin/waste-portal';
   return '/storefront';
 }
 
@@ -59,9 +66,11 @@ const AuthController = {
         maxAge:   24 * 60 * 60 * 1000
       });
 
+      const redirectUrl = await getRedirectUrl(user.role, user.id);
+
       res.status(201).json({
         message:  'Registration successful',
-        redirect: getRedirectUrl(user.role)
+        redirect: redirectUrl
       });
     } catch (err) {
       console.error('Register error:', err);
@@ -103,9 +112,11 @@ const AuthController = {
         maxAge:   24 * 60 * 60 * 1000
       });
 
+      const redirectUrl = await getRedirectUrl(user.role, user.id);
+
       res.json({
         message:  'Login successful',
-        redirect: getRedirectUrl(user.role)
+        redirect: redirectUrl
       });
     } catch (err) {
       console.error('Login error:', err);
@@ -114,8 +125,11 @@ const AuthController = {
   },
 
   /* ── Logout ────────────────────────────────────────────── */
-  logout(_req, res) {
+  logout(req, res) {
     res.clearCookie('token', { path: '/' });
+    if (req.headers.accept && req.headers.accept.includes('text/html')) {
+      return res.redirect('/login');
+    }
     res.json({ message: 'Logged out successfully', redirect: '/login' });
   },
 

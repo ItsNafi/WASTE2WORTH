@@ -2,27 +2,38 @@ const pool = require('../config/db');
 
 const CraftModel = {
   /** Insert a new upcycled craft listing. */
-  async create({ creatorId, title, description, category, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative }) {
+  async create({ creatorId, title, description, category, price, inventoryCount,
+                 beforePhotoUrl, afterPhotoUrl, storyNarrative,
+                 origin, materialsUsed, transformation, unitsRecycled, wasteKgDiverted,
+                 creatorLabel }) {
     const [result] = await pool.execute(
       `INSERT INTO UpcycledCrafts
-         (creatorId, title, description, category, price, inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         (creatorId, title, description, category, price, inventoryCount,
+          beforePhotoUrl, afterPhotoUrl, storyNarrative,
+          origin, materialsUsed, transformation, unitsRecycled, wasteKgDiverted, creatorLabel)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        creatorId,
-        title,
-        description  || null,
-        category || null,
+        creatorId, title,
+        description     || null,
+        category        || null,
         price,
-        inventoryCount || 1,
-        beforePhotoUrl || null,
-        afterPhotoUrl  || null,
-        storyNarrative || null
+        inventoryCount  || 1,
+        beforePhotoUrl  || null,
+        afterPhotoUrl   || null,
+        storyNarrative  || null,
+        origin          || null,
+        materialsUsed   || null,
+        transformation  || null,
+        unitsRecycled   || 0,
+        wasteKgDiverted || 0,
+        creatorLabel    || null
       ]
     );
     return {
       craftId: result.insertId,
       creatorId, title, description, category: category || null, price,
-      inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative
+      inventoryCount, beforePhotoUrl, afterPhotoUrl, storyNarrative,
+      origin, materialsUsed, transformation, unitsRecycled, wasteKgDiverted, creatorLabel
     };
   },
 
@@ -64,6 +75,24 @@ const CraftModel = {
       'UPDATE UpcycledCrafts SET inventoryCount = inventoryCount + ? WHERE craftId = ?',
       [change, craftId]
     );
+  },
+
+  /** Get all reviews for a craft. */
+  async getReviews(craftId) {
+    const [rows] = await pool.execute(
+      'SELECT * FROM CraftReviews WHERE craftId = ? ORDER BY createdAt DESC',
+      [craftId]
+    );
+    return rows;
+  },
+
+  /** Add a review for a craft. */
+  async addReview(craftId, reviewerName, reviewText, rating) {
+    const [result] = await pool.execute(
+      'INSERT INTO CraftReviews (craftId, reviewerName, reviewText, rating) VALUES (?, ?, ?, ?)',
+      [craftId, reviewerName, reviewText, rating || null]
+    );
+    return { reviewId: result.insertId, craftId, reviewerName, reviewText, rating };
   }
 };
 

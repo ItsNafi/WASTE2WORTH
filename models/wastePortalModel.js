@@ -243,6 +243,20 @@ const WasteRequestModel = {
       [volunteerId]
     );
     return rows;
+  },
+
+  async findAllIncoming() {
+    const [rows] = await pool.execute(
+      `SELECT wr.*,
+              wl.category    AS wasteCategory,
+              wl.weightKg    AS totalWeightKg,
+              u.name         AS requesterName
+       FROM WasteRequests wr
+       JOIN WasteLogs wl ON wr.logId = wl.logId
+       JOIN Users u ON wr.requesterId = u.id
+       ORDER BY wr.requestedAt DESC`
+    );
+    return rows;
   }
 };
 

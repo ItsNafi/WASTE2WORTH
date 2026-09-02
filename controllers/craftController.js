@@ -6,10 +6,12 @@ const CraftController = {
   /** Creator lists a new upcycled craft with before/after photos. */
   async createCraft(req, res) {
     try {
-      // Debug: log incoming form data and files to help diagnose missing category
-      console.log('createCraft request body:', req.body);
-      console.log('createCraft request files:', req.files);
-      const { title, description, price, inventoryCount, storyNarrative, category: rawCategory } = req.body;
+      const {
+        title, description, price, inventoryCount, storyNarrative,
+        category: rawCategory,
+        origin, materialsUsed, transformation, unitsRecycled, wasteKgDiverted,
+        creatorLabel
+      } = req.body;
       const creatorId = req.user.id;
       const category = typeof rawCategory === 'string' ? rawCategory.trim() : 'Home Decor';
       const safeCategory = category || 'Home Decor';
@@ -23,29 +25,23 @@ const CraftController = {
 
       let beforePhotoUrl = null;
       let afterPhotoUrl  = null;
-
       if (req.files) {
-        if (req.files.beforePhoto?.[0]) {
-          beforePhotoUrl = '/uploads/' + req.files.beforePhoto[0].filename;
-        }
-        if (req.files.afterPhoto?.[0]) {
-          afterPhotoUrl = '/uploads/' + req.files.afterPhoto[0].filename;
-        }
+        if (req.files.beforePhoto?.[0]) beforePhotoUrl = '/uploads/' + req.files.beforePhoto[0].filename;
+        if (req.files.afterPhoto?.[0])  afterPhotoUrl  = '/uploads/' + req.files.afterPhoto[0].filename;
       }
 
       const craft = await CraftModel.create({
-        creatorId,
-        title,
-        description,
+        creatorId, title, description,
         category: safeCategory,
         price:          parseFloat(price),
         inventoryCount: parseInt(inventoryCount) || 1,
-        beforePhotoUrl,
-        afterPhotoUrl,
-        storyNarrative
+        beforePhotoUrl, afterPhotoUrl, storyNarrative,
+        origin, materialsUsed, transformation,
+        unitsRecycled:   parseInt(unitsRecycled)   || 0,
+        wasteKgDiverted: parseFloat(wasteKgDiverted) || 0,
+        creatorLabel
       });
 
-      // Record craft creation in recycling history so category-based history appears
       await RecyclingHistoryModel.create({
         creatorId,
         craftId: craft.craftId,
@@ -55,9 +51,7 @@ const CraftController = {
         description: `Created a new ${safeCategory} craft: ${title}`
       });
 
-      // Award 30 green points for creating an upcycled craft
       await UserModel.updateGreenPoints(creatorId, 30);
-
       res.status(201).json({ message: 'Craft listed successfully!', craft });
     } catch (err) {
       console.error('Create craft error:', err);
@@ -102,21 +96,39 @@ const CraftController = {
       const { craftId } = req.params;
       const { quantity } = req.body;
       const amount = parseInt(quantity, 10);
-      
-      if (!amount || amount <= 0) {
-        return res.status(400).json({ error: 'Invalid restock quantity' });
-      }
-
+      if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid restock quantity' });
       const craft = await CraftModel.findById(craftId);
       if (!craft) return res.status(404).json({ error: 'Craft not found' });
-      if (craft.creatorId !== req.user.id) {
-        return res.status(403).json({ error: 'You do not own this craft' });
-      }
-
+      if (craft.creatorId !== req.user.id) return res.status(403).json({ error: 'You do not own this craft' });
       await CraftModel.updateInventory(craftId, amount);
       res.json({ message: 'Restocked successfully' });
     } catch (err) {
       res.status(500).json({ error: 'Failed to restock craft' });
+    }
+  },
+
+  /** Get reviews for a craft. */
+  async getReviews(req, res) {
+    try {
+      const reviews = await CraftModel.getReviews(req.params.craftId);
+      res.json(reviews);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to fetch reviews' });
+    }
+  },
+
+  /** Submit a review for a craft. */
+  async addReview(req, res) {
+    try {
+      const { craftId } = req.params;
+      const { reviewerName, reviewText, rating } = req.body;
+      if (!reviewerName || !reviewText) {
+        return res.status(400).json({ error: 'Name and review text are required' });
+      }
+      const review = await CraftModel.addReview(craftId, reviewerName, reviewText, rating);
+      res.status(201).json(review);
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to submit review' });
     }
   }
 };

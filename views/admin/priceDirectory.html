@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Scrap Prices — Admin — WASTE2WORTH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Admin Price Directory page-specific styles ──────────────── */
+
+    /* Status toggle pill */
+    .toggle-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-pill input[type="checkbox"] { display: none; }
+    .pill-track {
+      width: 44px;
+      height: 24px;
+      border-radius: 12px;
+      background: #ef4444;
+      position: relative;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .pill-track::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #fff;
+      transition: transform 0.2s;
+    }
+    .toggle-pill input:checked + .pill-track { background: #10b981; }
+    .toggle-pill input:checked + .pill-track::after { transform: translateX(20px); }
+    .pill-label { font-size: 0.8rem; font-weight: 600; color: var(--color-text-secondary); }
+
+    /* Inline price edit */
+    .price-cell-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .price-edit-input {
+      width: 90px;
+      padding: 6px 10px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 8px;
+      color: var(--color-text);
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    .price-edit-input:focus { outline: none; border-color: var(--color-primary); }
+
+    .save-price-btn {
+      padding: 6px 12px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      border: none;
+      border-radius: 8px;
+      color: #fff;
+      font-size: 0.8rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .save-price-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+    /* Status badge */
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-badge.active   { background: rgba(16,185,129,0.15); color: #10b981; }
+    .status-badge.inactive { background: rgba(239,68,68,0.15);  color: #ef4444; }
+
+    /* Icon display in table */
+    .mat-icon-cell {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .mat-icon-bubble {
+      width: 34px; height: 34px;
+      border-radius: 8px;
+      background: rgba(16,185,129,0.12);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    /* Add material form */
+    .add-form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 600px) { .add-form-grid { grid-template-columns: 1fr; } }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      z-index: 9999;
+      padding: 14px 22px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s;
+      max-width: 320px;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: linear-gradient(135deg, #10b981, #059669); }
+    .toast.error   { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+    /* Description overflow */
+    .desc-cell {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--color-text-secondary);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/admin/waste-portal" class="nav-item">
+          <span class="material-icons-outlined">recycling</span> Waste Portal
+        </a>
+        <a href="/dashboard/admin/product-story" class="nav-item">
+          <span class="material-icons-outlined">menu_book</span> Product Stories
+        </a>
+        <a href="/dashboard/admin/achievements" class="nav-item">
+          <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
+        </a>
+        <a href="/dashboard/admin/price-directory" class="nav-item active">
+          <span class="material-icons-outlined">sell</span> Price Directory
+        </a>
+        <a href="/dashboard/admin/volunteers" class="nav-item">
+          <span class="material-icons-outlined">volunteer_activism</span> Volunteers
+        </a>
+        <a href="/logout" id="logoutBtn" class="nav-item">
+          <span class="material-icons-outlined">logout</span> Logout
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 Admin Portal</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <!-- HEADER -->
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search"></div>
+        <div class="header-user">
+          <div class="user-info">
+            <span class="user-name">Admin</span>
+            <span class="user-role">Admin</span>
+          </div>
+          <div class="user-avatar">A</div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">Scrap Price Management</h1>
+          <p class="page-subtitle">Add, update, and manage scrap material prices. Inactive materials are hidden from users.</p>
+        </div>
+
+        <div class="form-row animate-slide-up">
+
+          <!-- ── Add Material Form ──────────────────────────────── -->
+          <div class="card">
+            <div class="card-header">
+              <h2 class="card-title">Add New Material</h2>
+            </div>
+            <form id="addMaterialForm" style="padding:0 var(--space-lg) var(--space-lg);">
+              <div class="add-form-grid">
+                <div class="form-group">
+                  <label class="form-label" for="newMatName">Material Name *</label>
+                  <input type="text" id="newMatName" class="form-input" placeholder="e.g. Rubber" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newMatCategory">Category *</label>
+                  <select id="newMatCategory" class="form-select" required>
+                    <option value="">Select category…</option>
+                    <option value="Plastic">Plastic</option>
+                    <option value="Paper">Paper</option>
+                    <option value="Metal">Metal</option>
+                    <option value="Glass">Glass</option>
+                    <option value="E-Waste">E-Waste</option>
+                    <option value="Textile">Textile</option>
+                    <option value="Organic">Organic</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newMatPrice">Price per KG (৳) *</label>
+                  <input type="number" id="newMatPrice" class="form-input" placeholder="e.g. 45" min="0" step="0.01" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label" for="newMatIcon">Icon (Emoji)</label>
+                  <input type="text" id="newMatIcon" class="form-input" placeholder="e.g. ♻️" maxlength="10">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="newMatDesc">Description</label>
+                <textarea id="newMatDesc" class="form-input" rows="2" placeholder="Short description of this material…" style="resize:vertical;"></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary-gradient btn-block" id="addMatBtn">
+                <span class="material-icons-outlined">add_circle</span> Add Material
+              </button>
+            </form>
+          </div>
+
+          <!-- ── Quick Stats ─────────────────────────────────────── -->
+          <div class="card" style="min-width:220px;">
+            <div class="card-header">
+              <h2 class="card-title">Directory Overview</h2>
+            </div>
+            <div style="padding: var(--space-lg); display:flex; flex-direction:column; gap:14px;">
+              <div class="stat-card" style="margin:0; padding:16px;">
+                <div class="flex-between mb-sm">
+                  <span class="stat-label">Total Materials</span>
+                  <div class="stat-icon green"><span class="material-icons-outlined">inventory_2</span></div>
+                </div>
+                <div class="stat-value" id="statTotal">—</div>
+              </div>
+              <div class="stat-card" style="margin:0; padding:16px;">
+                <div class="flex-between mb-sm">
+                  <span class="stat-label">Active</span>
+                  <div class="stat-icon blue"><span class="material-icons-outlined">check_circle</span></div>
+                </div>
+                <div class="stat-value" id="statActive">—</div>
+              </div>
+              <div class="stat-card" style="margin:0; padding:16px;">
+                <div class="flex-between mb-sm">
+                  <span class="stat-label">Inactive</span>
+                  <div class="stat-icon amber"><span class="material-icons-outlined">cancel</span></div>
+                </div>
+                <div class="stat-value" id="statInactive">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Materials Table ───────────────────────────────────── -->
+        <div class="card mt-lg animate-slide-up">
+          <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <h2 class="card-title">All Materials</h2>
+            <button class="btn btn-outline" style="font-size:0.85rem; padding:8px 16px;" onclick="loadAdminDirectory()">
+              <span class="material-icons-outlined" style="font-size:18px;">refresh</span> Refresh
+            </button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Material</th>
+                  <th>Price / kg (৳)</th>
+                  <th>Last Updated</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminMatTbody">
+                <tr><td colspan="5" class="text-center"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+  <script src="/js/app.js" defer></script>
+  <script>
+    // ── Admin Price Directory Logic ────────────────────────────────
+    let adminMaterials = [];
+
+    function showToast(msg, type = 'success') {
+      const t = document.getElementById('toast');
+      t.textContent  = msg;
+      t.className    = `toast ${type} show`;
+      setTimeout(() => t.classList.remove('show'), 3500);
+    }
+
+    async function loadAdminDirectory() {
+      try {
+        const res = await fetch('/api/price-directory/admin');
+        if (res.status === 401 || res.status === 403) {
+          showToast('Access denied — Admin only.', 'error');
+          return;
+        }
+        if (!res.ok) throw new Error('Failed to fetch');
+        adminMaterials = await res.json();
+        updateStats(adminMaterials);
+        renderAdminTable(adminMaterials);
+      } catch (err) {
+        document.getElementById('adminMatTbody').innerHTML =
+          '<tr><td colspan="5" class="text-center" style="color:#ef4444;">Failed to load materials. Check your connection.</td></tr>';
+      }
+    }
+
+    function updateStats(materials) {
+      document.getElementById('statTotal').textContent   = materials.length;
+      document.getElementById('statActive').textContent  = materials.filter(m => m.isActive).length;
+      document.getElementById('statInactive').textContent = materials.filter(m => !m.isActive).length;
+    }
+
+    function renderAdminTable(materials) {
+      const tbody = document.getElementById('adminMatTbody');
+      if (!materials.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">No materials found.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = materials.map(m => {
+        const updatedDate = m.updatedAt
+          ? new Date(m.updatedAt).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'N/A';
+        return `
+          <tr id="matRow-${m.categoryId}">
+            <td>
+              <div class="mat-icon-cell">
+                <div class="mat-icon-bubble">${m.icon || '♻️'}</div>
+                <strong>${m.categoryName}</strong>
+              </div>
+            </td>
+            <td>
+              <div class="price-cell-wrap">
+                <input type="number" class="price-edit-input"
+                       id="priceInput-${m.categoryId}"
+                       value="${parseFloat(m.pricePerKg).toFixed(2)}"
+                       min="0" step="0.01"
+                       aria-label="Price for ${m.categoryName}">
+                <button class="save-price-btn"
+                       onclick="savePrice(${m.categoryId})"
+                       id="saveBtn-${m.categoryId}"
+                       aria-label="Save price for ${m.categoryName}">
+                  Save
+                </button>
+              </div>
+            </td>
+            <td style="font-size:0.85rem; color:var(--color-text-secondary);">${updatedDate}</td>
+            <td>
+              <span class="status-badge ${m.isActive ? 'active' : 'inactive'}" id="statusBadge-${m.categoryId}">
+                ${m.isActive ? '✓ Active' : '✗ Inactive'}
+              </span>
+            </td>
+            <td>
+              <label class="toggle-pill" title="${m.isActive ? 'Click to deactivate' : 'Click to activate'}">
+                <input type="checkbox"
+                       id="toggleCheck-${m.categoryId}"
+                       ${m.isActive ? 'checked' : ''}
+                       onchange="toggleMaterial(${m.categoryId}, this.checked)">
+                <div class="pill-track"></div>
+                <span class="pill-label" id="pillLabel-${m.categoryId}">${m.isActive ? 'Active' : 'Inactive'}</span>
+              </label>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function savePrice(id) {
+      const btn   = document.getElementById(`saveBtn-${id}`);
+      const input = document.getElementById(`priceInput-${id}`);
+      const price = parseFloat(input.value);
+
+      if (isNaN(price) || price < 0) {
+        showToast('Please enter a valid price.', 'error');
+        return;
+      }
+
+      btn.textContent = '…';
+      btn.disabled    = true;
+
+      try {
+        const res = await fetch(`/api/price-directory/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pricePerKg: price })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+        showToast(`Price updated to ৳${price.toFixed(2)}/kg ✓`);
+        // Refresh to get updated timestamp
+        loadAdminDirectory();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.textContent = 'Save';
+        btn.disabled    = false;
+      }
+    }
+
+    async function toggleMaterial(id, isActive) {
+      const label = document.getElementById(`pillLabel-${id}`);
+      const badge = document.getElementById(`statusBadge-${id}`);
+      try {
+        const res = await fetch(`/api/price-directory/${id}/toggle`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: isActive ? 1 : 0 })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed');
+
+        label.textContent = isActive ? 'Active' : 'Inactive';
+        badge.textContent = isActive ? '✓ Active' : '✗ Inactive';
+        badge.className   = `status-badge ${isActive ? 'active' : 'inactive'}`;
+        showToast(`Material ${isActive ? 'activated' : 'deactivated'} ✓`);
+        updateStats(adminMaterials.map(m => m.categoryId == id ? {...m, isActive: isActive ? 1 : 0} : m));
+      } catch (err) {
+        // Revert checkbox on failure
+        document.getElementById(`toggleCheck-${id}`).checked = !isActive;
+        showToast(err.message, 'error');
+      }
+    }
+
+    // ── Add Material Form ─────────────────────────────────────────
+    document.getElementById('addMaterialForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('addMatBtn');
+
+      const payload = {
+        categoryName:    document.getElementById('newMatName').value.trim(),
+        displayCategory: document.getElementById('newMatCategory').value,
+        pricePerKg:      parseFloat(document.getElementById('newMatPrice').value),
+        description:     document.getElementById('newMatDesc').value.trim() || null,
+        icon:            document.getElementById('newMatIcon').value.trim() || '♻️'
+      };
+
+      btn.disabled    = true;
+      btn.textContent = 'Adding…';
+
+      try {
+        const res = await fetch('/api/price-directory', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Failed to add material');
+
+        showToast(`"${payload.categoryName}" added successfully ✓`);
+        e.target.reset();
+        loadAdminDirectory();
+      } catch (err) {
+        showToast(err.message, 'error');
+      } finally {
+        btn.disabled    = false;
+        btn.innerHTML   = '<span class="material-icons-outlined">add_circle</span> Add Material';
+      }
+    });
+
+    // Load on ready
+    document.addEventListener('DOMContentLoaded', loadAdminDirectory);
+  </script>
+</body>
+</html>

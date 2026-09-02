@@ -83,39 +83,27 @@
 <body>
 <div class="app-layout">
 
-  
   <aside class="sidebar">
     <div class="sidebar-brand">
       <span class="material-icons-outlined">eco</span> WASTE2WORTH
     </div>
     <nav class="sidebar-nav">
-        <a href="/dashboard.html" class="nav-item">
-          <span class="material-icons-outlined">bar_chart</span> Impact Dashboard
-        </a>
-      <a href="/dashboard/volunteer" class="nav-item">
-        <span class="material-icons-outlined">event</span> Campaigns
-      </a>
-      <a href="/dashboard/volunteer/waste-portal" class="nav-item active">
+      <a href="/dashboard/admin/waste-portal" class="nav-item active">
         <span class="material-icons-outlined">recycling</span> Waste Portal
       </a>
-      <a href="/dashboard/volunteer/product-story" class="nav-item">
-        <span class="material-icons-outlined">eco</span> Product Stories
+      <a href="/dashboard/admin/product-story" class="nav-item">
+        <span class="material-icons-outlined">menu_book</span> Product Stories
       </a>
-        <a href="/volunteer/scan" class="nav-item">
-          <span class="material-icons-outlined">qr_code_scanner</span> Scan QR Code
-        </a>
-        <div class="nav-section-title">My Profile</div>
-      <a href="/volunteer/profile" class="nav-item">
-        <span class="material-icons-outlined">manage_accounts</span> Volunteer Profile
+      <a href="/dashboard/admin/achievements" class="nav-item">
+        <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
       </a>
-      <a href="/volunteer/register" class="nav-item">
-        <span class="material-icons-outlined">volunteer_activism</span> Register / Update
+      <a href="/dashboard/admin/price-directory" class="nav-item">
+        <span class="material-icons-outlined">sell</span> Price Directory
       </a>
-      <div class="nav-section-title">Account</div>
-      <a href="#" id="downloadCertBtn" class="nav-item">
-        <span class="material-icons-outlined">card_membership</span> Certificate
+      <a href="/dashboard/admin/volunteers" class="nav-item">
+        <span class="material-icons-outlined">volunteer_activism</span> Volunteers
       </a>
-      <a href="#" id="logoutBtn" class="nav-item">
+      <a href="/logout" id="logoutBtn" class="nav-item">
         <span class="material-icons-outlined">logout</span> Logout
       </a>
     </nav>
@@ -125,7 +113,6 @@
   </aside>
 
   <div class="main-wrapper">
-    
     <header class="header">
       <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
         <span class="material-icons-outlined">menu</span>
@@ -147,14 +134,13 @@
       </div>
     </header>
 
-    
     <main class="main-content">
       <div class="page-header animate-fade-in">
         <h1 class="page-title">Community Waste Sourcing Portal</h1>
         <p class="page-subtitle">Log waste collected during cleanup drives and help the community source materials.</p>
       </div>
 
-      
+      <!-- ── Stats ──────────────────────────────────────── -->
       <div class="stats-grid animate-slide-up" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
           <div class="flex-between mb-sm">
@@ -172,14 +158,15 @@
         </div>
         <div class="stat-card">
           <div class="flex-between mb-sm">
-            <span class="stat-label">Claimed by Community</span>
-            <div class="stat-icon blue"><span class="material-icons-outlined">handshake</span></div>
+            <span class="stat-label">Est. Scrap Value</span>
+            <div class="stat-icon blue"><span class="material-icons-outlined">sell</span></div>
           </div>
-          <div class="stat-value" id="statClaimed">0</div>
+          <div class="stat-value" id="statEstValue" style="font-size:1.3rem;">৳0</div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px;">based on logged weight</div>
         </div>
       </div>
 
-      
+      <!-- ── Tab Navigation ─────────────────────────────── -->
       <div class="tab-nav animate-slide-up">
         <button class="tab-btn active" data-tab="log-waste" id="tabLogWaste">
           <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> Log Waste
@@ -188,14 +175,16 @@
           <span class="material-icons-outlined" style="font-size:18px;">list_alt</span> My Logs
         </button>
         <button class="tab-btn" data-tab="incoming-requests" id="tabIncomingRequests">
-          <span class="material-icons-outlined" style="font-size:18px;">handshake</span> Claim Requests
+          <span class="material-icons-outlined" style="font-size:18px;">storefront</span> Available Waste
         </button>
         <button class="tab-btn" data-tab="drives" id="tabDrives">
           <span class="material-icons-outlined" style="font-size:18px;">directions_walk</span> Drives
         </button>
       </div>
 
-      
+      <!-- ════════════════════════════════════════════════ -->
+      <!-- PANEL 1: Log Waste                              -->
+      <!-- ════════════════════════════════════════════════ -->
       <div class="tab-panel active" id="panelLogWaste">
         <div class="form-row">
           <div class="card animate-slide-up">
@@ -221,11 +210,19 @@
                 <label class="form-label" for="wlWeight">Weight (kg)</label>
                 <input type="number" id="wlWeight" name="weightKg" step="0.01" min="0.01" class="form-input" placeholder="e.g., 5.5" required>
               </div>
-              <div class="form-group">
-                <label class="form-label" for="wlDrive">Linked Drive (Optional)</label>
-                <select id="wlDrive" name="driveId" class="form-select">
-                  <option value="">— No drive (ad-hoc collection) —</option>
-                </select>
+              <!-- Live Price Preview (Feature 16 integration) -->
+              <div id="livePricePreview" style="display:none; margin-bottom:var(--space-md); padding:14px 16px; background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.06)); border:1px solid rgba(16,185,129,0.25); border-radius:12px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                  <span class="material-icons-outlined" style="font-size:16px;color:#10b981;">sell</span>
+                  <span style="font-size:12px;font-weight:600;color:#10b981;text-transform:uppercase;letter-spacing:0.05em;">Current Market Price</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                  <span id="lpCategory" style="font-size:14px;color:var(--color-text-secondary);">—</span>
+                  <span id="lpRate" style="font-size:15px;font-weight:700;color:var(--color-text);">৳—/kg</span>
+                </div>
+                <div id="lpEstimate" style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(16,185,129,0.2);font-size:13px;color:var(--color-text-secondary);display:none;">
+                  Estimated value: <strong id="lpEstValue" style="color:#10b981;">৳0</strong>
+                </div>
               </div>
               <div class="form-group">
                 <label class="form-label" for="wlNotes">Notes / Description (Optional)</label>
@@ -251,28 +248,27 @@
 
           <div class="card animate-slide-up">
             <div class="card-header" style="padding-bottom:0;">
-              <h2 class="card-title">Points Guide</h2>
+              <h2 class="card-title">📋 Scrap Price Reference</h2>
             </div>
             <div style="padding:var(--space-lg);">
-              <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-md);">Green Points are automatically calculated from weight &amp; category when you log waste.</p>
-              <table class="data-table" style="font-size:13px;">
-                <thead><tr><th>Category</th><th>Multiplier</th></tr></thead>
-                <tbody>
-                  <tr><td>E-Waste</td><td style="color:var(--color-primary);font-weight:600;">×2.0 / kg</td></tr>
-                  <tr><td>Plastic</td><td style="color:var(--color-primary);font-weight:600;">×1.5 / kg</td></tr>
-                  <tr><td>Metal / Paper / Glass</td><td style="color:var(--color-primary);font-weight:600;">×1.0 / kg</td></tr>
-                  <tr><td>Organic</td><td style="color:var(--color-text-secondary);">×0.5 / kg</td></tr>
-                </tbody>
-              </table>
-              <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--color-primary-dark);">
-                <strong>Bonus:</strong> Earn +5 extra points each time a citizen claims waste you logged!
+              <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-md);">Live reference prices from the Price Directory. Select a category above to see the estimated value of your waste.</p>
+              <div id="priceRefTableWrap">
+                <div class="loading-spinner"><div class="spinner"></div></div>
               </div>
+              <div style="margin-top:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);font-size:13px;color:var(--color-primary-dark);">
+                <strong>Tip:</strong> Prices update automatically. Select a category &amp; enter weight to see the estimated scrap value.
+              </div>
+              <a href="/dashboard/admin/price-directory" target="_blank" style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:12px;color:var(--color-primary);text-decoration:none;font-weight:600;">
+                <span class="material-icons-outlined" style="font-size:15px;">open_in_new</span> View Full Price Directory
+              </a>
             </div>
           </div>
         </div>
       </div>
 
-      
+      <!-- ════════════════════════════════════════════════ -->
+      <!-- PANEL 2: My Logs                                -->
+      <!-- ════════════════════════════════════════════════ -->
       <div class="tab-panel" id="panelMyLogs">
         <div class="card animate-slide-up">
           <div class="card-header" style="flex-wrap:wrap;gap:var(--space-sm);">
@@ -292,10 +288,34 @@
         </div>
       </div>
 
-      
+      <!-- ════════════════════════════════════════════════ -->
+      <!-- PANEL 3: Available Waste Marketplace             -->
+      <!-- ════════════════════════════════════════════════ -->
+      <div class="tab-panel" id="panelIncomingRequests">
+        <div class="card animate-slide-up">
+          <div class="card-header" style="flex-wrap:wrap;gap:var(--space-sm);">
+            <div>
+              <h2 class="card-title">Available Waste for Pickup</h2>
+              <p style="font-size:12px;color:var(--color-text-secondary);margin-top:2px;">Your collected waste that buyers and recyclers can claim</p>
+            </div>
+            <div class="filter-row" style="margin:0;">
+              <button class="filter-chip active" data-wastefilter="available">Available</button>
+              <button class="filter-chip" data-wastefilter="all">All</button>
+            </div>
+          </div>
+          <div style="padding:var(--space-md);">
+            <div id="incomingRequestsContainer">
+              <div class="loading-spinner"><div class="spinner"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════════════════════════════════════════════════ -->
+      <!-- PANEL 4: Drives                                 -->
+      <!-- ════════════════════════════════════════════════ -->
       <div class="tab-panel" id="panelDrives">
         <div class="form-row">
-          
           <div class="card animate-slide-up">
             <div class="card-header">
               <h2 class="card-title">Create a Cleanup Drive</h2>
@@ -323,7 +343,6 @@
             </form>
           </div>
 
-          
           <div class="card animate-slide-up">
             <div class="card-header" style="flex-wrap:wrap;gap:var(--space-sm);">
               <h2 class="card-title">Upcoming Drives</h2>
@@ -339,19 +358,6 @@
               </div>
             </div>
           </div>
-      </div>
-
-      
-      <div class="tab-panel" id="panelIncomingRequests">
-        <div class="card animate-slide-up">
-          <div class="card-header">
-            <h2 class="card-title">Incoming Claim Requests</h2>
-          </div>
-          <div style="padding:var(--space-md);">
-            <div id="incomingRequestsContainer">
-              <div class="loading-spinner"><div class="spinner"></div></div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -359,6 +365,86 @@
   </div>
 </div>
 <script src="/js/app.js" defer></script>
+<script>
+  /* ── Feature 16: Live Price Directory integration ─────────────────── */
+  let priceMap = {}; // { categoryName: pricePerKg }
+
+  async function loadPriceDirectory() {
+    try {
+      const res  = await fetch('/api/price-directory');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      // Build price map keyed by category name (case-insensitive)
+      data.forEach(m => { priceMap[m.categoryName.toLowerCase()] = parseFloat(m.pricePerKg); });
+
+      // Render the Scrap Price Reference table
+      const wrap = document.getElementById('priceRefTableWrap');
+      if (!wrap) return;
+      const rows = data.map(m => `
+        <tr>
+          <td style="font-weight:500;">${m.icon || '♻️'} ${m.categoryName}</td>
+          <td style="color:var(--color-primary);font-weight:700;">৳${parseFloat(m.pricePerKg).toFixed(0)}/kg</td>
+        </tr>`).join('');
+      wrap.innerHTML = `
+        <table class="data-table" style="font-size:13px;">
+          <thead><tr><th>Category</th><th>Price / kg</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    } catch(e) {
+      const wrap = document.getElementById('priceRefTableWrap');
+      if (wrap) wrap.innerHTML = '<p style="font-size:13px;color:var(--color-text-secondary);">Could not load prices.</p>';
+    }
+  }
+
+  function updateLivePreview() {
+    const cat    = document.getElementById('wlCategory')?.value || '';
+    const weight = parseFloat(document.getElementById('wlWeight')?.value) || 0;
+    const price  = priceMap[cat.toLowerCase()];
+    const preview = document.getElementById('livePricePreview');
+    if (!preview) return;
+
+    if (!cat || price === undefined) {
+      preview.style.display = 'none';
+      return;
+    }
+
+    preview.style.display = 'block';
+    document.getElementById('lpCategory').textContent = cat;
+    document.getElementById('lpRate').textContent     = `৳${price.toFixed(0)}/kg`;
+
+    const est = document.getElementById('lpEstimate');
+    if (weight > 0) {
+      est.style.display = 'block';
+      document.getElementById('lpEstValue').textContent = `৳${(price * weight).toFixed(2)}`;
+    } else {
+      est.style.display = 'none';
+    }
+  }
+
+  // Wire up live preview to form inputs
+  document.addEventListener('DOMContentLoaded', () => {
+    loadPriceDirectory();
+
+    const catSel  = document.getElementById('wlCategory');
+    const weightIn = document.getElementById('wlWeight');
+    if (catSel)   catSel.addEventListener('change', updateLivePreview);
+    if (weightIn) weightIn.addEventListener('input',  updateLivePreview);
+
+    // Update Est. Scrap Value stat after logs load
+    // Hook into existing app.js stats update by observing the Kg stat
+    const kgEl = document.getElementById('statKg');
+    if (kgEl) {
+      const observer = new MutationObserver(() => {
+        const kg = parseFloat(kgEl.textContent) || 0;
+        // Rough average price ৳45/kg (Plastic rate) as placeholder for mixed logs
+        const estEl = document.getElementById('statEstValue');
+        if (estEl && kg > 0) estEl.textContent = `৳${(kg * 45).toFixed(0)}`;
+      });
+      observer.observe(kgEl, { childList: true, subtree: true, characterData: true });
+    }
+  });
+</script>
 </body>
 </html>
 

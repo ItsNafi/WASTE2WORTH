@@ -225,16 +225,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const logoutBtn = document.getElementById('logoutBtn');
-  if (logoutBtn) {
-    logoutBtn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      try {
-        const res = await apiCall('/api/auth/logout');
-        window.location.href = res.redirect || '/login';
-      } catch (err) {}
-    });
-  }
+  // ── Logout (event delegation — works even if script loads after click) ──
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('#logoutBtn');
+    if (!btn) return;
+    e.preventDefault();
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    } catch (_) {}
+    window.location.href = '/login';
+  });
 
   // ============================================================
   // USER INFO LOADING
@@ -251,18 +251,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const headerUser = document.getElementById('headerUser');
       if (headerUser) headerUser.style.display = 'flex';
       
-      // Update sidebar links dynamically for logged-in user
       const authLink = document.getElementById('navAuthLink');
       if (authLink) {
         authLink.innerHTML = '<span class="material-icons-outlined">logout</span> Logout';
-        authLink.id = 'logoutBtn'; // Hook up logout listener
-        authLink.addEventListener('click', async (e) => {
-          e.preventDefault();
-          try {
-            const res = await apiCall('/api/auth/logout');
-            window.location.href = res.redirect || '/login';
-          } catch (err) {}
-        });
+        authLink.id = 'logoutBtn'; // Picked up by document-level delegation
       }
       
       const dashboardLink = document.getElementById('navDashboardLink');
@@ -271,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user.role === 'BhangariShop') route = '/dashboard/bhangari';
         else if (user.role === 'Creator') route = '/dashboard/creator';
         else if (user.role === 'Admin') route = '/dashboard/admin';
-        else if (user.role === 'Volunteer') route = '/dashboard/volunteer';
+        else if (user.role === 'Volunteer') route = '/volunteer/register';
         dashboardLink.href = route;
       }
 
@@ -308,7 +300,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div id="notifList" style="display:none; position:absolute; top:35px; right:0; width:300px; background:white; box-shadow:var(--shadow-card); border-radius:var(--radius-md); border:1px solid var(--color-border); z-index:100; max-height:300px; overflow-y:auto;">
               </div>
             `;
-            headerUser.insertBefore(notifDropdown, headerUser.firstChild);
+            if (headerUser) headerUser.insertBefore(notifDropdown, headerUser.firstChild);
             
             notifDropdown.addEventListener('click', async (e) => {
               const list = document.getElementById('notifList');
@@ -962,9 +954,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // VOLUNTEER: CAMPAIGNS
+  // CAMPAIGNS (ADMIN / VOLUNTEER)
   // ============================================================
-  if (currentPath.includes('/volunteer')) {
+  if (document.getElementById('campaignsFeed') || currentPath.includes('/campaigns') || currentPath.includes('/volunteer')) {
     const loadCampaigns = async () => {
       const feed = document.getElementById('campaignsFeed');
       if (!feed) return;
@@ -1041,9 +1033,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // VOLUNTEER: WASTE PORTAL
+  // WASTE PORTAL (ADMIN)
   // ============================================================
-  if (currentPath.includes('/volunteer/waste-portal')) {
+  if (document.getElementById('wasteLogForm') || currentPath.includes('waste-portal')) {
     // 1. Tab Switching
     const tabBtns = document.querySelectorAll('.tab-nav .tab-btn');
     const tabPanels = document.querySelectorAll('.tab-panel');
@@ -1090,7 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ${l.photoUrl ? `<img src="${l.photoUrl}" class="log-thumb">` : `<div class="log-thumb-placeholder"><span class="material-icons-outlined">image</span></div>`}
             <div class="log-info">
               <div class="log-title">${escapeHTML(l.category)} — ${l.weightKg} kg</div>
-              <div class="log-meta">Logged on ${formatDate(l.createdAt)} ${l.driveTitle ? `| Drive: ${escapeHTML(l.driveTitle)}` : ''}</div>
+              <div class="log-meta">Logged on ${formatDate(l.collectedAt || l.createdAt)} ${(l.driveName || l.driveTitle) ? `| Drive: ${escapeHTML(l.driveName || l.driveTitle)}` : ''}</div>
               ${l.notes ? `<div style="font-size:12px;color:var(--color-text-secondary);">${escapeHTML(l.notes)}</div>` : ''}
             </div>
             <span class="status-pill" data-status="${l.status || 'Pending'}">${l.status || 'Pending'}</span>
@@ -1102,29 +1094,170 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // 4. Load Upcoming/All Drives
+    let allDrives = [];
+    const renderDrives = (drives) => {
+      const container = document.getElementById('drivesContainer');
+      if (!container) return;
+      if (drives.length === 0) {
+        container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><span class="material-icons-outlined" style="font-size:48px;color:var(--color-text-muted);">directions_walk</span><p>No drives found for this filter.</p></div>';
+        return;
+      }
+      container.innerHTML = drives.map(d => {
+        const isUpcoming = d.status === 'Upcoming' || d.status === 'Active';
+        const icon = isUpcoming ? 'event_available' : 'event';
+        return `
+          <div class="drive-card" style="position:relative;overflow:hidden;">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+              <div style="width:40px;height:40px;border-radius:50%;background:${isUpcoming ? 'var(--color-primary-bg)' : 'var(--color-bg-body)'};display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-icons-outlined" style="font-size:20px;color:${isUpcoming ? 'var(--color-primary)' : 'var(--color-text-muted)'}">${icon}</span>
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div class="drive-card-title" style="margin-bottom:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHTML(d.title)}</div>
+                ${d.organizerName ? `<div style="font-size:11px;color:var(--color-text-muted);">by ${escapeHTML(d.organizerName)}</div>` : ''}
+              </div>
+              <span class="status-pill" data-status="${d.status}" style="flex-shrink:0;">${d.status}</span>
+            </div>
+            <div class="drive-card-meta">
+              <span><span class="material-icons-outlined" style="font-size:14px;">place</span> ${escapeHTML(d.location || d.boundaryZone || 'Location TBA')}</span>
+              <span><span class="material-icons-outlined" style="font-size:14px;">calendar_today</span> ${formatDate(d.date)}</span>
+              ${d.participantCap ? `<span><span class="material-icons-outlined" style="font-size:14px;">group</span> Up to ${d.participantCap} participants</span>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
     const loadDrives = async () => {
       const container = document.getElementById('drivesContainer');
       if (!container) return;
+      container.innerHTML = '<div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>';
       try {
-        const drives = await apiCall('/api/drives');
-        if (drives.length === 0) {
-          container.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No cleanup drives available.</div>';
-          return;
-        }
-        container.innerHTML = drives.map(d => `
-          <div class="drive-card">
-            <div class="drive-card-title">${escapeHTML(d.title)}</div>
-            <div class="drive-card-meta">
-              <span><span class="material-icons-outlined" style="font-size:14px;">place</span> ${escapeHTML(d.location || d.boundaryZone || '')}</span>
-              <span><span class="material-icons-outlined" style="font-size:14px;">calendar_today</span> ${formatDate(d.date)}</span>
-            </div>
-            <span class="status-pill" data-status="${d.status}">${d.status}</span>
-          </div>
-        `).join('');
+        allDrives = await apiCall('/api/drives');
+        // Apply active filter
+        const activeChip = document.querySelector('[data-drivefilter].active');
+        const activeFilter = activeChip ? activeChip.dataset.drivefilter : 'all';
+        applyDriveFilter(activeFilter);
       } catch (err) {
         container.innerHTML = '<div class="form-error" style="grid-column:1/-1;">Failed to load drives.</div>';
       }
     };
+
+    const applyDriveFilter = (filter) => {
+      let filtered = allDrives;
+      if (filter === 'upcoming') {
+        filtered = allDrives.filter(d => d.status === 'Upcoming' || d.status === 'Active');
+      } else if (filter === 'past') {
+        filtered = allDrives.filter(d => d.status === 'Completed');
+      }
+      renderDrives(filtered);
+    };
+
+    // Wire up drive filter chips
+    document.querySelectorAll('[data-drivefilter]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('[data-drivefilter]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        applyDriveFilter(chip.dataset.drivefilter);
+      });
+    });
+
+    // 4b. Available Waste Marketplace
+    let availableWasteLogs = [];
+    const loadAvailableWaste = async () => {
+      const container = document.getElementById('incomingRequestsContainer');
+      if (!container) return;
+      container.innerHTML = '<div class="loading-spinner"><div class="spinner"></div></div>';
+      try {
+        availableWasteLogs = await apiCall('/api/waste-logs');
+        // Apply active filter
+        const activeChip = document.querySelector('[data-wastefilter].active');
+        const activeFilter = activeChip ? activeChip.dataset.wastefilter : 'available';
+        applyWasteFilter(activeFilter);
+      } catch (err) {
+        container.innerHTML = '<div class="form-error">Failed to load waste listings.</div>';
+      }
+    };
+
+    const applyWasteFilter = (filter) => {
+      let filtered = availableWasteLogs;
+      if (filter === 'available') {
+        filtered = availableWasteLogs.filter(l => l.status !== 'Claimed');
+      } else if (filter === 'claimed') {
+        filtered = availableWasteLogs.filter(l => l.status === 'Claimed');
+      }
+      renderAvailableWaste(filtered);
+    };
+
+    const renderAvailableWaste = (logs) => {
+      const container = document.getElementById('incomingRequestsContainer');
+      if (!container) return;
+
+      if (logs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="padding:48px 0;">
+            <span class="material-icons-outlined" style="font-size:52px;color:var(--color-text-muted);">storefront</span>
+            <p style="margin-top:12px;color:var(--color-text-secondary);">No waste listed yet. Log some waste from the "Log Waste" tab to start showcasing.</p>
+          </div>`;
+        return;
+      }
+
+      const categoryEmojis = { Plastic:'♻️', Metal:'🔩', Paper:'📄', Glass:'🪟', 'E-Waste':'💻', Textile:'🧵', Organic:'🌿', Other:'📦' };
+      const categoryColors = { Plastic:'#0ea5e9', Metal:'#6366f1', Paper:'#f59e0b', Glass:'#06b6d4', 'E-Waste':'#8b5cf6', Textile:'#ec4899', Organic:'#22c55e', Other:'#64748b' };
+
+      container.innerHTML = `<div class="drive-grid">${logs.map(l => {
+        const emoji = categoryEmojis[l.category] || '📦';
+        const color = categoryColors[l.category] || '#64748b';
+        const isClaimed = l.status === 'Claimed';
+        const weight = parseFloat(l.weightKg || 0).toFixed(1);
+        const estPrice = (parseFloat(l.weightKg || 0) * 45).toFixed(0);
+
+        return `
+          <div class="drive-card animate-fade-in" style="padding:0;overflow:hidden;${isClaimed ? 'opacity:0.65;' : ''}">
+            <!-- Color header bar -->
+            <div style="background:linear-gradient(135deg, ${color}22, ${color}11);padding:16px 20px;border-bottom:1px solid var(--color-border);">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <span style="font-size:28px;">${emoji}</span>
+                <span class="status-pill" data-status="${isClaimed ? 'Claimed' : 'Pending'}">${isClaimed ? 'Claimed' : 'Available'}</span>
+              </div>
+              <div style="font-weight:700;font-size:18px;color:var(--color-text-primary);">${escapeHTML(l.category)}</div>
+              <div style="font-size:12px;color:var(--color-text-muted);margin-top:2px;">Logged on ${formatDate(l.collectedAt || l.createdAt)}</div>
+            </div>
+
+            <!-- Details -->
+            <div style="padding:16px 20px;">
+              <div style="display:flex;gap:16px;margin-bottom:12px;">
+                <div style="flex:1;">
+                  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted);">Weight</div>
+                  <div style="font-size:20px;font-weight:700;color:var(--color-primary);margin-top:2px;">${weight} kg</div>
+                </div>
+                <div style="flex:1;">
+                  <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--color-text-muted);">Est. Value</div>
+                  <div style="font-size:20px;font-weight:700;color:var(--color-text-primary);margin-top:2px;">৳${estPrice}</div>
+                </div>
+              </div>
+
+              ${l.notes ? `<div style="font-size:12px;color:var(--color-text-secondary);padding:8px 12px;background:var(--color-bg-body);border-radius:var(--radius-sm);margin-bottom:12px;font-style:italic;">"${escapeHTML(l.notes)}"</div>` : ''}
+
+              ${l.photoUrl ? `<img src="${l.photoUrl}" style="width:100%;height:120px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:12px;">` : ''}
+
+              ${!isClaimed ? `<div style="padding:10px 12px;background:linear-gradient(135deg,rgba(16,185,129,0.08),rgba(6,182,212,0.06));border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);font-size:12px;color:#10b981;display:flex;align-items:center;gap:6px;">
+                <span class="material-icons-outlined" style="font-size:16px;">check_circle</span> Ready for pickup — visible to buyers
+              </div>` : `<div style="padding:10px 12px;background:var(--color-bg-body);border-radius:var(--radius-sm);font-size:12px;color:var(--color-text-muted);display:flex;align-items:center;gap:6px;">
+                <span class="material-icons-outlined" style="font-size:16px;">task_alt</span> Already claimed by a buyer
+              </div>`}
+            </div>
+          </div>`;
+      }).join('')}</div>`;
+    };
+
+    // Wire up waste filter chips
+    document.querySelectorAll('[data-wastefilter]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('[data-wastefilter]').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        applyWasteFilter(chip.dataset.wastefilter);
+      });
+    });
 
     // 5. Submit waste log form
     const wasteForm = document.getElementById('wasteLogForm');
@@ -1185,11 +1318,22 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // 7. Tab switch: load on demand
+    document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        if (tab === 'my-logs' || tab === 'log-waste') loadMyLogs();
+        if (tab === 'incoming-requests') loadAvailableWaste();
+        if (tab === 'drives') loadDrives();
+      });
+    });
+
     // Initialize all
     loadUserInfo();
     loadDrivesDropdown();
     loadMyLogs();
     loadDrives();
+    loadAvailableWaste();
   }
 
   // ============================================================
@@ -1246,7 +1390,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ============================================================
   // ADMIN DASHBOARD
   // ============================================================
-  if (currentPath.includes('/admin')) {
+  if (document.getElementById('adminCampaignForm') || document.getElementById('priceDirectoryTbody') || currentPath === '/dashboard/admin') {
     const loadAdminDashboard = async () => {
       try {
         const data = await apiCall('/api/admin/dashboard');
@@ -1360,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  if (currentPath === '/dashboard/volunteer/product-story') {
+  if (document.getElementById('productStoryForm') || currentPath.includes('product-story')) {
 
     const storyForm = document.getElementById('productStoryForm');
     if (storyForm) {
@@ -1382,7 +1526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
         } finally {
           btn.disabled = false;
-          btn.innerHTML = 'Add Product Story';
+          btn.innerHTML = '<span class="material-icons-outlined">add_circle</span> Add Product Story';
         }
       });
     }
@@ -1394,7 +1538,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       try {
         const crafts = await apiCall('/api/crafts');
-        const filtered = crafts.filter(c => c.origin || c.materialsUsed || c.transformation || c.storyNarrative || c.title);
+        const filtered = crafts.filter(c => c.title);
 
         if (filtered.length === 0) {
           grid.innerHTML = `
@@ -1406,119 +1550,169 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         grid.innerHTML = filtered.map(item => {
-          const mockReviews = [
-            { user: 'Anon Buyer', text: 'This item is beautiful, highly recommend!' },
-            { user: 'Eco Friend', text: 'Amazing environmental impact! Let\'s save Dhaka!' }
-          ];
+          const creator = item.creatorLabel || item.creatorName || null;
+          const hasImpact = (item.unitsRecycled > 0 || parseFloat(item.wasteKgDiverted) > 0);
 
           return `
-            <div class="story-card animate-fade-in" id="storyCard-${item.craftId}">
-              <div class="story-card-header">
-                <h3>🌱 ${escapeHTML(item.title || 'Product Story')}</h3>
-                <span class="story-card-badge">
-                  <span class="material-icons-outlined" style="font-size:12px;">sell</span>
-                  ৳${parseFloat(item.price).toFixed(2)}
-                </span>
+          <div class="story-card animate-fade-in" id="storyCard-${item.craftId}">
+
+            <!-- Header -->
+            <div class="story-card-header">
+              <h3>🌱 ${escapeHTML(item.title)}</h3>
+              <span class="story-card-badge">
+                <span class="material-icons-outlined" style="font-size:12px;">sell</span>
+                ৳${parseFloat(item.price).toFixed(2)}
+              </span>
+            </div>
+
+            <!-- Photo -->
+            ${item.afterPhotoUrl || item.beforePhotoUrl
+              ? `<img class="story-card-img" src="${item.afterPhotoUrl || item.beforePhotoUrl}" alt="${escapeHTML(item.title)}">`
+              : `<div class="story-card-img-placeholder"><span class="material-icons-outlined" style="font-size:48px;">image_not_supported</span></div>`
+            }
+
+            <!-- Details -->
+            <div class="story-card-body">
+              ${item.description ? `
+              <div class="story-field">
+                <span class="story-field-label">Description</span>
+                <span class="story-field-value">${escapeHTML(item.description)}</span>
               </div>
+              <div class="story-divider"></div>` : ''}
 
-              ${item.afterPhotoUrl || item.beforePhotoUrl ? `
-              <div style="width:100%;height:240px;overflow:hidden;background:#f0f4f0;">
-                <img src="${item.afterPhotoUrl || item.beforePhotoUrl}" alt="Product picture"
-                     style="width:100%;height:100%;object-fit:cover;">
-              </div>` : `
-              <div style="width:100%;height:140px;display:flex;align-items:center;justify-content:center;background:#f0f4f0;color:#94a3b8;">
-                <span class="material-icons-outlined" style="font-size:48px;">image_not_supported</span>
-              </div>`}
+              ${item.origin ? `
+              <div class="story-field">
+                <span class="story-field-label">Origin</span>
+                <span class="story-field-value">${escapeHTML(item.origin)}</span>
+              </div>` : ''}
 
-              <div class="story-card-body">
-                ${item.description ? `
-                <div class="story-section-block">
-                  <span class="story-label-title">Description:</span>
-                  <span class="story-value-text">${escapeHTML(item.description)}</span>
+              ${item.materialsUsed ? `
+              <div class="story-field">
+                <span class="story-field-label">Materials Used</span>
+                <span class="story-field-value">${escapeHTML(item.materialsUsed)}</span>
+              </div>` : ''}
+
+              ${creator ? `
+              <div class="story-field">
+                <span class="story-field-label">Created By</span>
+                <span class="story-field-value" style="font-weight:600;color:var(--color-primary-dark);">${escapeHTML(creator)}</span>
+              </div>` : ''}
+
+              ${item.transformation || item.storyNarrative ? `
+              <div class="story-divider"></div>
+              <div class="story-field">
+                <span class="story-field-label">Transformation</span>
+                <span class="story-field-value" style="font-style:italic;">${escapeHTML(item.transformation || item.storyNarrative)}</span>
+              </div>` : ''}
+
+              ${hasImpact ? `
+              <div class="story-divider"></div>
+              <div class="story-field">
+                <span class="story-field-label">Environmental Impact</span>
+                <div class="story-impact-row" style="margin-top:4px;">
+                  ${item.unitsRecycled > 0 ? `
+                  <span class="story-impact-chip">
+                    <span class="material-icons-outlined">recycling</span>
+                    ${item.unitsRecycled} units recycled
+                  </span>` : ''}
+                  ${parseFloat(item.wasteKgDiverted) > 0 ? `
+                  <span class="story-impact-chip">
+                    <span class="material-icons-outlined">eco</span>
+                    ${parseFloat(item.wasteKgDiverted).toFixed(1)} kg diverted
+                  </span>` : ''}
                 </div>
-                <div class="story-divider"></div>` : ''}
+              </div>` : ''}
+            </div>
 
-                <div class="story-section-block">
-                  <span class="story-label-title">Origin:</span>
-                  <span class="story-value-text">${escapeHTML(item.origin || 'Collected from Community Campaign')}</span>
-                </div>
-
-                <div class="story-section-block">
-                  <span class="story-label-title">Materials Used:</span>
-                  <span class="story-value-text">${escapeHTML(item.materialsUsed || 'Recycled materials')}</span>
-                </div>
-
-                <div class="story-section-block">
-                  <span class="story-label-title">Created By:</span>
-                  <span class="story-value-text" style="font-weight:600;color:var(--color-primary-dark);">${escapeHTML(item.creatorName || '—')}</span>
-                </div>
-
-                <div class="story-divider"></div>
-
-                <div class="story-section-block">
-                  <span class="story-label-title">Transformation:</span>
-                  <span class="story-value-text" style="font-style:italic;white-space:pre-line;">${escapeHTML(item.transformation || item.storyNarrative || 'N/A')}</span>
-                </div>
-
-                <div class="story-divider"></div>
-
-                <div class="story-section-block">
-                  <span class="story-label-title">Environmental Impact:</span>
-                  <ul class="story-impact-list">
-                    <li class="story-impact-item">
-                      <span class="material-icons-outlined icon">check_circle</span>
-                      <span>${item.unitsRecycled || 0} units recycled</span>
-                    </li>
-                    <li class="story-impact-item">
-                      <span class="material-icons-outlined icon">check_circle</span>
-                      <span>${item.wasteKgDiverted ? parseFloat(item.wasteKgDiverted).toFixed(1) : '0.0'} kg waste diverted</span>
-                    </li>
-                    ${item.environmentalNote ? `
-                    <li class="story-impact-item">
-                      <span class="material-icons-outlined icon">check_circle</span>
-                      <span>${escapeHTML(item.environmentalNote)}</span>
-                    </li>` : ''}
-                  </ul>
+            <!-- Customer Reviews -->
+            <div class="story-reviews-box">
+              <div class="story-reviews-header">
+                <span>Customer Reviews</span>
+                <span style="cursor:pointer;color:var(--color-primary);font-weight:600;font-size:0.75rem;text-transform:none;"
+                      onclick="toggleReviewForm(${item.craftId})">Write Review</span>
+              </div>
+              <div id="reviewForm-${item.craftId}" style="display:none;margin-bottom:10px;padding:10px;background:var(--color-bg-card);border-radius:var(--radius-sm);border:1px solid var(--color-border);">
+                <input id="reviewName-${item.craftId}" type="text" placeholder="Your name" class="form-input" style="margin-bottom:6px;font-size:13px;">
+                <textarea id="reviewText-${item.craftId}" placeholder="Write your review..." class="form-textarea" rows="2" style="font-size:13px;margin-bottom:6px;min-height:56px;"></textarea>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <select id="reviewRating-${item.craftId}" class="form-select" style="font-size:13px;width:auto;">
+                    <option value="">Rating (optional)</option>
+                    <option value="5">⭐⭐⭐⭐⭐ 5 stars</option>
+                    <option value="4">⭐⭐⭐⭐ 4 stars</option>
+                    <option value="3">⭐⭐⭐ 3 stars</option>
+                    <option value="2">⭐⭐ 2 stars</option>
+                    <option value="1">⭐ 1 star</option>
+                  </select>
+                  <button class="btn btn-primary" style="font-size:12px;padding:6px 14px;" onclick="submitReview(${item.craftId})">Submit</button>
                 </div>
               </div>
-
-              <div class="story-reviews-box">
-                <div class="story-reviews-header">
-                  <span>Customer Reviews</span>
-                  <span style="font-size:0.75rem;color:var(--color-primary);font-weight:600;text-transform:none;cursor:pointer;"
-                        onclick="addMockReview(${item.craftId})">Write Review</span>
-                </div>
-                <div id="reviewsList-${item.craftId}">
-                  ${mockReviews.map(r => `
-                    <div class="story-review-item">
-                      <span class="story-review-user">${escapeHTML(r.user)}</span>
-                      <span>${escapeHTML(r.text)}</span>
-                    </div>
-                  `).join('')}
-                </div>
+              <div id="reviewsList-${item.craftId}">
+                <div class="loading-spinner" style="padding:6px 0;"><div class="spinner" style="width:18px;height:18px;"></div></div>
               </div>
             </div>
-          `;
+
+          </div>`;
         }).join('');
+
+        // Load real reviews for every card
+        filtered.forEach(item => loadReviews(item.craftId));
+
+        // Update count badge
+        const countEl = document.getElementById('storiesCount');
+        if (countEl) countEl.textContent = `${filtered.length} product${filtered.length !== 1 ? 's' : ''}`;
+
       } catch (err) {
         grid.innerHTML = `<div class="form-error">Failed to load product stories.</div>`;
       }
     };
 
-    window.addMockReview = (craftId) => {
-      const text = prompt('Write a review text:');
-      if (!text) return;
-      const reviewsList = document.getElementById(`reviewsList-${craftId}`);
-      if (!reviewsList) return;
-      const user = prompt('Enter your name:', 'Eco Volunteer') || 'Eco Volunteer';
-      const reviewDiv = document.createElement('div');
-      reviewDiv.className = 'story-review-item';
-      reviewDiv.innerHTML = `
-        <span class="story-review-user">${escapeHTML(user)}</span>
-        <span>${escapeHTML(text)}</span>
-      `;
-      reviewsList.appendChild(reviewDiv);
-      showToast('Review submitted successfully!', 'success');
+    const loadReviews = async (craftId) => {
+      const list = document.getElementById(`reviewsList-${craftId}`);
+      if (!list) return;
+      try {
+        const res = await fetch(`/api/crafts/${craftId}/reviews`, { credentials: 'include' });
+        if (!res.ok) { list.innerHTML = ''; return; }
+        const reviews = await res.json();
+        if (reviews.length === 0) {
+          list.innerHTML = '<p style="font-size:12px;color:var(--color-text-muted);margin:4px 0;">No reviews yet. Be the first!</p>';
+          return;
+        }
+        list.innerHTML = reviews.map(r => {
+          const stars = r.rating ? '⭐'.repeat(r.rating) : '';
+          return `
+            <div class="story-review-item">
+              <span class="story-review-user">${escapeHTML(r.reviewerName)}</span>
+              ${stars ? `<span style="font-size:11px;">${stars}</span> ` : ''}
+              <span>${escapeHTML(r.reviewText)}</span>
+            </div>`;
+        }).join('');
+      } catch {
+        list.innerHTML = '';
+      }
+    };
+
+    window.toggleReviewForm = (craftId) => {
+      const form = document.getElementById(`reviewForm-${craftId}`);
+      if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    };
+
+    window.submitReview = async (craftId) => {
+      const name   = document.getElementById(`reviewName-${craftId}`)?.value?.trim();
+      const text   = document.getElementById(`reviewText-${craftId}`)?.value?.trim();
+      const rating = document.getElementById(`reviewRating-${craftId}`)?.value || null;
+      if (!name || !text) { showToast('Please enter your name and review.', 'error'); return; }
+      try {
+        await apiCall(`/api/crafts/${craftId}/reviews`, {
+          method: 'POST',
+          body: JSON.stringify({ reviewerName: name, reviewText: text, rating })
+        });
+        showToast('Review submitted!', 'success');
+        // Reset & hide form, reload reviews
+        document.getElementById(`reviewName-${craftId}`).value = '';
+        document.getElementById(`reviewText-${craftId}`).value = '';
+        document.getElementById(`reviewForm-${craftId}`).style.display = 'none';
+        loadReviews(craftId);
+      } catch { showToast('Failed to submit review.', 'error'); }
     };
 
     const searchInput = document.getElementById('storySearch');
@@ -1633,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     };
 
-    const renderProfile = (p) => {
+    const renderProfile = async (p) => {
       currentProfile = p;
 
       // Hero section
@@ -1673,6 +1867,30 @@ document.addEventListener('DOMContentLoaded', () => {
           .map(s => `<span class="interest-tag">${escapeHTML(s)}</span>`).join('');
       } else {
         interestsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">No interests selected.</span>';
+      }
+
+      // Load & Render Volunteer Medals
+      const medalsEl = document.getElementById('infoMedals');
+      if (medalsEl) {
+        try {
+          const medals = await apiCall('/api/medals/my', { ignoreAuthError: true });
+          if (medals && medals.length > 0) {
+            medalsEl.innerHTML = medals.map(m => `
+              <div class="profile-medal-card">
+                <span class="profile-medal-icon">${m.medalIcon}</span>
+                <div>
+                  <div class="profile-medal-title">${escapeHTML(m.medalName)}</div>
+                  ${m.reason ? `<div class="profile-medal-reason">"${escapeHTML(m.reason)}"</div>` : ''}
+                  <div class="profile-medal-meta">Awarded by ${escapeHTML(m.adminName)} &bull; ${formatDate(m.awardedAt)}</div>
+                </div>
+              </div>
+            `).join('');
+          } else {
+            medalsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">No medals awarded yet.</span>';
+          }
+        } catch {
+          medalsEl.innerHTML = '<span style="color:var(--color-text-muted); font-size:0.875rem;">No medals awarded yet.</span>';
+        }
       }
 
       // Populate edit tab fields
