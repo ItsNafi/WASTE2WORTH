@@ -175,8 +175,12 @@ app.use((req, res) => {
   res.status(404).send('<h2>404 Not Found</h2><p>The page or API endpoint does not exist.</p>');
 });
 
+<<<<<<< HEAD
 /* ── Server Startup ──────────────────────────────────────────────────────── */
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 WASTE2WORTH server running on http://localhost:${PORT}`);
 });
+=======
+module.exports = app;
+>>>>>>> origin/main

@@ -2,10 +2,10 @@
   "name": "waste2worth",
   "version": "1.0.0",
   "description": "WASTE2WORTH - Circular Economy Platform for scrap recycling and upcycled crafts",
-  "main": "app.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "node --watch app.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
