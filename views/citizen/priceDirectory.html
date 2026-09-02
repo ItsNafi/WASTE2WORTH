@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scrap Price Directory — WASTE2WORTH</title>
+  <meta name="description" content="Check current reference prices for recyclable and scrap materials in Bangladesh. Use the calculator to estimate your scrap value.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Price Directory page-specific styles ───────────────────── */
+    .pd-toolbar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+    .pd-search-wrap {
+      flex: 1;
+      min-width: 220px;
+      position: relative;
+    }
+    .pd-search-wrap .material-icons-outlined {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-secondary);
+      font-size: 20px;
+    }
+    #pdSearch {
+      width: 100%;
+      padding: 11px 16px 11px 44px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      color: var(--color-text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    #pdSearch:focus { outline: none; border-color: var(--color-primary); }
+
+    #pdCategoryFilter {
+      padding: 11px 16px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 12px;
+      color: var(--color-text);
+      font-size: 0.95rem;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.2s;
+      min-width: 180px;
+    }
+    #pdCategoryFilter:focus { outline: none; border-color: var(--color-primary); }
+
+    /* Material Cards Grid */
+    .materials-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .material-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 16px;
+      padding: 24px;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      animation: fadeUp 0.4s ease both;
+    }
+    .material-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+      border-color: var(--color-primary);
+    }
+    .material-card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .material-icon-wrap {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      flex-shrink: 0;
+    }
+    .material-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--color-text);
+      margin: 0;
+    }
+    .material-category-tag {
+      font-size: 0.75rem;
+      color: var(--color-text-secondary);
+      background: rgba(255,255,255,0.06);
+      padding: 2px 10px;
+      border-radius: 20px;
+      margin-top: 2px;
+      display: inline-block;
+    }
+    .material-price {
+      font-size: 1.85rem;
+      font-weight: 700;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .material-price-unit {
+      font-size: 0.9rem;
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      -webkit-text-fill-color: var(--color-text-secondary);
+    }
+    .material-description {
+      font-size: 0.875rem;
+      color: var(--color-text-secondary);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .material-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 12px;
+      border-top: 1px solid var(--color-border);
+    }
+    .material-updated {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+    }
+    .status-badge {
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .status-badge.active   { background: rgba(16,185,129,0.15); color: #10b981; }
+    .status-badge.inactive { background: rgba(239,68,68,0.15);  color: #ef4444; }
+
+    .pd-calc-btn {
+      margin-top: auto;
+      padding: 9px 0;
+      background: linear-gradient(135deg, rgba(16,185,129,0.12), rgba(6,182,212,0.1));
+      border: 1px solid rgba(16,185,129,0.3);
+      border-radius: 10px;
+      color: #10b981;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+    }
+    .pd-calc-btn:hover {
+      background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(6,182,212,0.2));
+      border-color: rgba(16,185,129,0.6);
+      transform: translateY(-1px);
+    }
+
+    /* ── Calculator Modal ────────────────────────────────────────── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .calc-modal {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 20px;
+      padding: 36px;
+      width: 100%;
+      max-width: 460px;
+      transform: translateY(20px);
+      transition: transform 0.25s;
+    }
+    .modal-overlay.open .calc-modal { transform: translateY(0); }
+
+    .calc-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+    .calc-modal-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--color-text);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .calc-close-btn {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      cursor: pointer;
+      padding: 4px;
+      border-radius: 8px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .calc-close-btn:hover { color: var(--color-text); background: rgba(255,255,255,0.07); }
+
+    .calc-material-display {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: rgba(16,185,129,0.07);
+      border: 1px solid rgba(16,185,129,0.2);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+    }
+    .calc-material-display .icon { font-size: 28px; }
+    .calc-material-info .name { font-weight: 600; color: var(--color-text); font-size: 1rem; }
+    .calc-material-info .price-ref {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      margin-top: 2px;
+    }
+
+    .calc-weight-group { margin-bottom: 24px; }
+    .calc-weight-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .calc-weight-input-wrap { display: flex; gap: 10px; }
+    #calcWeight {
+      flex: 1;
+      padding: 12px 16px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      color: var(--color-text);
+      font-size: 1rem;
+      font-family: inherit;
+      transition: border-color 0.2s;
+    }
+    #calcWeight:focus { outline: none; border-color: var(--color-primary); }
+    .calc-unit-badge {
+      padding: 12px 18px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--color-border);
+      border-radius: 10px;
+      color: var(--color-text-secondary);
+      font-weight: 600;
+    }
+
+    .calc-result-box {
+      background: linear-gradient(135deg, rgba(16,185,129,0.1), rgba(6,182,212,0.07));
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: 14px;
+      padding: 22px 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      min-height: 88px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .calc-result-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-secondary);
+      margin-bottom: 8px;
+    }
+    .calc-result-value {
+      font-size: 2.4rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+    }
+    .calc-result-formula {
+      font-size: 0.82rem;
+      color: var(--color-text-secondary);
+      margin-top: 6px;
+    }
+    .calc-disclaimer {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      text-align: center;
+      padding: 10px 14px;
+      background: rgba(251,191,36,0.07);
+      border: 1px solid rgba(251,191,36,0.18);
+      border-radius: 8px;
+    }
+    .calc-disclaimer .material-icons-outlined { font-size: 14px; vertical-align: middle; }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Empty state */
+    .pd-empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--color-text-secondary);
+      grid-column: 1/-1;
+    }
+    .pd-empty-state .material-icons-outlined {
+      font-size: 56px;
+      opacity: 0.3;
+      display: block;
+      margin: 0 auto 16px;
+    }
+    .pd-empty-state p { font-size: 1rem; margin: 0; }
+
+    /* Stats bar */
+    .pd-stats-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .pd-stats-chip {
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      background: rgba(255,255,255,0.05);
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--color-border);
+    }
+    .pd-stats-chip strong { color: var(--color-text); }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span class="material-icons-outlined">eco</span> WASTE2WORTH
+      </div>
+      <nav class="sidebar-nav" id="pdSidebarNav">
+        <!-- Links rendered by JS based on user role -->
+      </nav>
+      <script>
+        (function buildSidebarNav() {
+          // window.__ROLE__ is injected server-side by PriceDirectoryController.servePage
+          const role = (window.__ROLE__ || '').toLowerCase();
+          const nav  = document.getElementById('pdSidebarNav');
+
+          if (role === 'volunteer') {
+            nav.innerHTML = `
+              <a href="/dashboard/volunteer/waste-portal" class="nav-item">
+                <span class="material-icons-outlined">recycling</span> Waste Portal
+              </a>
+              <a href="/dashboard/volunteer/product-story" class="nav-item">
+                <span class="material-icons-outlined">eco</span> Product Stories
+              </a>
+              <a href="/dashboard/volunteer/achievements" class="nav-item">
+                <span class="material-icons-outlined">emoji_events</span> Achievements
+              </a>
+              <a href="/price-directory" class="nav-item active">
+                <span class="material-icons-outlined">sell</span> Price Directory
+              </a>
+              <div class="nav-section-title">My Profile</div>
+              <a href="/volunteer/profile" class="nav-item">
+                <span class="material-icons-outlined">manage_accounts</span> Volunteer Profile
+              </a>
+              <a href="/volunteer/register" class="nav-item">
+                <span class="material-icons-outlined">volunteer_activism</span> Register / Update
+              </a>
+              <a href="/logout" id="logoutBtn" class="nav-item">
+                <span class="material-icons-outlined">logout</span> Logout
+              </a>`;
+          } else if (role === 'citizen') {
+            nav.innerHTML = `
+              <a href="/dashboard/citizen" class="nav-item">
+                <span class="material-icons-outlined">home</span> Dashboard
+              </a>
+              <a href="/dashboard/citizen/price-directory" class="nav-item active">
+                <span class="material-icons-outlined">sell</span> Price Directory
+              </a>
+              <a href="/dashboard/citizen/pollution" class="nav-item">
+                <span class="material-icons-outlined">report_problem</span> Report Pollution
+              </a>
+              <a href="/storefront" class="nav-item">
+                <span class="material-icons-outlined">storefront</span> Storefront
+              </a>
+              <a href="/logout" id="logoutBtn" class="nav-item">
+                <span class="material-icons-outlined">logout</span> Logout
+              </a>`;
+          } else if (role === 'admin') {
+            nav.innerHTML = `
+              <a href="/dashboard/admin" class="nav-item">
+                <span class="material-icons-outlined">admin_panel_settings</span> Dashboard
+              </a>
+              <a href="/price-directory" class="nav-item active">
+                <span class="material-icons-outlined">sell</span> Price Directory
+              </a>
+              <a href="/logout" id="logoutBtn" class="nav-item">
+                <span class="material-icons-outlined">logout</span> Logout
+              </a>`;
+          }
+        })();
+      </script>
+      <div class="sidebar-footer">
+        <div style="font-size: 12px; color: rgba(255,255,255,0.5); text-align: center;">&copy; 2026 WASTE2WORTH</div>
+      </div>
+    </aside>
+
+    <div class="main-wrapper">
+      <!-- HEADER -->
+      <header class="header">
+        <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+          <span class="material-icons-outlined">menu</span>
+        </button>
+        <div class="header-search"></div>
+        <div class="header-user">
+          <div class="green-points-badge">
+            <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+            <span class="green-points-value">0</span>
+          </div>
+          <div class="user-info">
+            <span class="user-name">User</span>
+            <span class="user-role">Citizen</span>
+          </div>
+          <div class="user-avatar">U</div>
+        </div>
+      </header>
+
+      <!-- MAIN CONTENT -->
+      <main class="main-content">
+        <div class="page-header animate-fade-in">
+          <h1 class="page-title">♻️ Local Scrap Price Directory</h1>
+          <p class="page-subtitle">Reference prices for recyclable materials in Bangladesh. Prices are updated by administrators. Use the calculator to estimate your scrap value before listing.</p>
+        </div>
+
+        <!-- Toolbar: search + filter -->
+        <div class="pd-toolbar animate-fade-in">
+          <div class="pd-search-wrap">
+            <span class="material-icons-outlined">search</span>
+            <input type="text" id="pdSearch" placeholder="Search materials (e.g. Plastic, Metal…)" autocomplete="off">
+          </div>
+          <select id="pdCategoryFilter">
+            <option value="">All Categories</option>
+            <option value="Plastic">♻️ Plastic</option>
+            <option value="Paper">📄 Paper</option>
+            <option value="Metal">🔩 Metal</option>
+            <option value="Glass">🫙 Glass</option>
+            <option value="E-Waste">💻 E-Waste</option>
+            <option value="Textile">👕 Textile</option>
+            <option value="Organic">🌿 Organic</option>
+            <option value="Other">📦 Other</option>
+          </select>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="pd-stats-bar animate-fade-in" id="pdStatsBar">
+          <span class="pd-stats-chip">Loading…</span>
+        </div>
+
+        <!-- Materials Grid -->
+        <div class="materials-grid" id="materialsGrid">
+          <!-- Cards injected by JS -->
+          <div class="pd-empty-state" style="grid-column:1/-1;">
+            <span class="material-icons-outlined">hourglass_empty</span>
+            <p>Loading materials…</p>
+          </div>
+        </div>
+
+        <!-- Estimated Value Calculator Section (always visible) -->
+        <div class="card animate-slide-up" id="calcSection">
+          <div class="card-header">
+            <h2 class="card-title">⭐ Estimated Scrap Value Calculator</h2>
+            <p style="margin:4px 0 0 0; color:var(--color-text-secondary); font-size:0.875rem;">
+              Select a material and enter weight to get an estimated value. Click the <strong>"Estimate Value"</strong> button on any card above.
+            </p>
+          </div>
+          <div style="padding:24px; display:flex; flex-direction:column; gap:20px; max-width:520px;">
+
+            <div>
+              <label class="form-label" for="calcMaterialSelect">Material</label>
+              <select id="calcMaterialSelect" class="form-select">
+                <option value="">— Select a material —</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="form-label" for="calcWeightInline">Weight (kg)</label>
+              <input type="number" id="calcWeightInline" class="form-input" placeholder="e.g. 10" min="0.01" step="0.01">
+            </div>
+
+            <div class="calc-result-box" id="inlineCalcResult">
+              <div class="calc-result-label">Estimated Value</div>
+              <div class="calc-result-value" id="inlineCalcValue">৳0.00</div>
+              <div class="calc-result-formula" id="inlineCalcFormula">Enter weight above to calculate</div>
+            </div>
+
+            <button class="btn btn-primary-gradient" id="inlineCalcBtn" onclick="runInlineCalc()">
+              <span class="material-icons-outlined">calculate</span> Calculate
+            </button>
+
+            <div class="calc-disclaimer">
+              <span class="material-icons-outlined">info</span>
+              This is an <strong>estimated reference value only</strong>. Actual prices offered by buyers may vary. No payment or transaction is implied.
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Calculator Modal (from card buttons) ─────────────────── -->
+  <div class="modal-overlay" id="calcModalOverlay" onclick="closeCalcModal(event)">
+    <div class="calc-modal" role="dialog" aria-modal="true" aria-label="Scrap Value Calculator">
+      <div class="calc-modal-header">
+        <div class="calc-modal-title">
+          <span class="material-icons-outlined" style="color:#10b981;">calculate</span>
+          Scrap Value Calculator
+        </div>
+        <button class="calc-close-btn" onclick="closeCalcModalDirect()" aria-label="Close calculator">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="calc-material-display">
+        <div class="icon" id="modalMatIcon">♻️</div>
+        <div class="calc-material-info">
+          <div class="name" id="modalMatName">Material</div>
+          <div class="price-ref">Reference Price: <strong id="modalMatPrice">৳0/kg</strong></div>
+        </div>
+      </div>
+
+      <div class="calc-weight-group">
+        <label class="calc-weight-label" for="calcWeight">Enter Weight</label>
+        <div class="calc-weight-input-wrap">
+          <input type="number" id="calcWeight" placeholder="e.g. 10" min="0.01" step="0.01" oninput="computeCalc()">
+          <div class="calc-unit-badge">kg</div>
+        </div>
+      </div>
+
+      <div class="calc-result-box">
+        <div class="calc-result-label">Estimated Value</div>
+        <div class="calc-result-value" id="calcResultValue">৳0.00</div>
+        <div class="calc-result-formula" id="calcResultFormula">Enter weight to calculate</div>
+      </div>
+
+      <div class="calc-disclaimer">
+        <span class="material-icons-outlined">info</span>
+        This is an <strong>estimated reference value only</strong>. Actual prices offered by buyers may vary. No payment or transaction is implied.
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js" defer></script>
+  <script>
+    // ── Price Directory page logic ─────────────────────────────────
+    let allMaterials = [];
+    let calcCurrentPrice = 0;
+
+    async function loadPriceDirectory() {
+      try {
+        const res = await fetch('/api/price-directory');
+        if (!res.ok) throw new Error('Failed to fetch');
+        allMaterials = await res.json();
+        populateCalcSelect(allMaterials);
+        updateStatsBar(allMaterials);
+        renderMaterialCards(allMaterials);
+      } catch (err) {
+        document.getElementById('materialsGrid').innerHTML =
+          `<div class="pd-empty-state" style="grid-column:1/-1;">
+            <span class="material-icons-outlined">error_outline</span>
+            <p>Could not load materials. Please try refreshing.</p>
+          </div>`;
+      }
+    }
+
+    function populateCalcSelect(materials) {
+      const sel = document.getElementById('calcMaterialSelect');
+      sel.innerHTML = '<option value="">— Select a material —</option>';
+      materials.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.categoryId;
+        opt.dataset.price = m.pricePerKg;
+        opt.textContent = `${m.icon || '♻️'} ${m.categoryName} — ৳${parseFloat(m.pricePerKg).toFixed(0)}/kg`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function updateStatsBar(materials) {
+      const bar = document.getElementById('pdStatsBar');
+      const categories = [...new Set(materials.map(m => m.displayCategory))];
+      const maxPrice   = Math.max(...materials.map(m => parseFloat(m.pricePerKg)));
+      const maxMat     = materials.find(m => parseFloat(m.pricePerKg) === maxPrice);
+      bar.innerHTML = `
+        <span class="pd-stats-chip"><strong>${materials.length}</strong> Materials</span>
+        <span class="pd-stats-chip"><strong>${categories.length}</strong> Categories</span>
+        ${maxMat ? `<span class="pd-stats-chip">Highest: <strong>${maxMat.icon || '♻️'} ${maxMat.categoryName} ৳${parseFloat(maxMat.pricePerKg).toFixed(0)}/kg</strong></span>` : ''}
+        <span class="pd-stats-chip">Last updated: <strong>${new Date().toLocaleDateString('en-BD', {day:'2-digit',month:'short',year:'numeric'})}</strong></span>
+      `;
+    }
+
+    function renderMaterialCards(materials) {
+      const grid = document.getElementById('materialsGrid');
+      if (!materials.length) {
+        grid.innerHTML = `
+          <div class="pd-empty-state" style="grid-column:1/-1;">
+            <span class="material-icons-outlined">search_off</span>
+            <p>No materials found matching your search.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = materials.map((m, i) => {
+        const price = parseFloat(m.pricePerKg);
+        const updatedDate = m.updatedAt
+          ? new Date(m.updatedAt).toLocaleDateString('en-BD', { day: '2-digit', month: 'short', year: 'numeric' })
+          : 'N/A';
+        return `
+          <div class="material-card" style="animation-delay:${i * 0.05}s">
+            <div class="material-card-header">
+              <div class="material-icon-wrap">${m.icon || '♻️'}</div>
+              <div>
+                <p class="material-name">${m.categoryName}</p>
+                <span class="material-category-tag">${m.displayCategory || 'Other'}</span>
+              </div>
+            </div>
+            <div>
+              <span class="material-price">৳${price.toFixed(0)}</span>
+              <span class="material-price-unit"> / kg</span>
+            </div>
+            ${m.description ? `<p class="material-description">${m.description}</p>` : ''}
+            <div class="material-meta">
+              <span class="material-updated">
+                <span class="material-icons-outlined" style="font-size:14px;vertical-align:middle;">update</span>
+                ${updatedDate}
+              </span>
+              <span class="status-badge ${m.isActive ? 'active' : 'inactive'}">${m.isActive ? '✓ Available' : '✗ Unavailable'}</span>
+            </div>
+            <button class="pd-calc-btn" onclick="openCalcModal(${m.categoryId})" id="calcBtn-${m.categoryId}">
+              <span class="material-icons-outlined" style="font-size:18px;">calculate</span>
+              Estimate Value
+            </button>
+          </div>`;
+      }).join('');
+    }
+
+    function filterMaterials() {
+      const query    = document.getElementById('pdSearch').value.toLowerCase().trim();
+      const category = document.getElementById('pdCategoryFilter').value;
+      const filtered = allMaterials.filter(m => {
+        const matchSearch = !query ||
+          m.categoryName.toLowerCase().includes(query) ||
+          (m.description && m.description.toLowerCase().includes(query)) ||
+          (m.displayCategory && m.displayCategory.toLowerCase().includes(query));
+        const matchCat = !category || m.displayCategory === category || m.categoryName === category;
+        return matchSearch && matchCat;
+      });
+      renderMaterialCards(filtered);
+    }
+
+    // ── Calculator Modal ──────────────────────────────────────────
+    function openCalcModal(materialId) {
+      const mat = allMaterials.find(m => m.categoryId == materialId);
+      if (!mat) return;
+      calcCurrentPrice = parseFloat(mat.pricePerKg);
+      document.getElementById('modalMatIcon').textContent  = mat.icon || '♻️';
+      document.getElementById('modalMatName').textContent  = mat.categoryName;
+      document.getElementById('modalMatPrice').textContent = `৳${calcCurrentPrice.toFixed(0)}/kg`;
+      document.getElementById('calcWeight').value          = '';
+      document.getElementById('calcResultValue').textContent  = '৳0.00';
+      document.getElementById('calcResultFormula').textContent = 'Enter weight to calculate';
+      document.getElementById('calcModalOverlay').classList.add('open');
+      setTimeout(() => document.getElementById('calcWeight').focus(), 100);
+    }
+
+    function closeCalcModal(e) {
+      if (e.target === document.getElementById('calcModalOverlay')) closeCalcModalDirect();
+    }
+    function closeCalcModalDirect() {
+      document.getElementById('calcModalOverlay').classList.remove('open');
+    }
+
+    function computeCalc() {
+      const weight = parseFloat(document.getElementById('calcWeight').value);
+      if (!weight || weight <= 0) {
+        document.getElementById('calcResultValue').textContent   = '৳0.00';
+        document.getElementById('calcResultFormula').textContent = 'Enter a valid weight';
+        return;
+      }
+      const total = weight * calcCurrentPrice;
+      document.getElementById('calcResultValue').textContent   = `৳${total.toLocaleString('en-BD', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+      document.getElementById('calcResultFormula').textContent = `${weight} kg × ৳${calcCurrentPrice.toFixed(0)}/kg`;
+    }
+
+    // Close modal on Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeCalcModalDirect();
+    });
+
+    // ── Inline Calculator ─────────────────────────────────────────
+    function runInlineCalc() {
+      const sel    = document.getElementById('calcMaterialSelect');
+      const weight = parseFloat(document.getElementById('calcWeightInline').value);
+      const selected = sel.options[sel.selectedIndex];
+      if (!selected || !selected.dataset.price) {
+        alert('Please select a material first.');
+        return;
+      }
+      if (!weight || weight <= 0) {
+        alert('Please enter a valid weight.');
+        return;
+      }
+      const price = parseFloat(selected.dataset.price);
+      const total = weight * price;
+      const matName = selected.textContent.split('—')[0].trim();
+      document.getElementById('inlineCalcValue').textContent   = `৳${total.toLocaleString('en-BD', {minimumFractionDigits:2, maximumFractionDigits:2})}`;
+      document.getElementById('inlineCalcFormula').textContent = `${weight} kg × ৳${price.toFixed(0)}/kg (${matName})`;
+    }
+
+    // Live filtering
+    document.getElementById('pdSearch').addEventListener('input', filterMaterials);
+    document.getElementById('pdCategoryFilter').addEventListener('change', filterMaterials);
+
+    // Inline calc: auto-compute on weight change if material selected
+    document.getElementById('calcWeightInline').addEventListener('input', () => {
+      const sel = document.getElementById('calcMaterialSelect');
+      if (sel.value) runInlineCalc();
+    });
+    document.getElementById('calcMaterialSelect').addEventListener('change', () => {
+      if (document.getElementById('calcWeightInline').value) runInlineCalc();
+    });
+
+    // Load on page ready
+    document.addEventListener('DOMContentLoaded', loadPriceDirectory);
+  </script>
+</body>
+</html>

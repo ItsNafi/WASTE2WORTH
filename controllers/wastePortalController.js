@@ -251,7 +251,9 @@ const WastePortalController = {
   
   async getIncomingRequests(req, res) {
     try {
-      const requests = await WasteRequestModel.findByVolunteerLogs(req.user.id);
+      const requests = (req.user.role === 'Admin')
+        ? await WasteRequestModel.findAllIncoming()
+        : await WasteRequestModel.findByVolunteerLogs(req.user.id);
       res.json(requests);
     } catch (err) {
       console.error('getIncomingRequests error:', err);

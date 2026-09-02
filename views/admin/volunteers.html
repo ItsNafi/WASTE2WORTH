@@ -187,6 +187,59 @@
       color: var(--color-text-muted);
     }
     .empty-state .material-icons-outlined { font-size: 48px; margin-bottom: 12px; display: block; }
+
+    /* ── Medal Award Section ── */
+    .medal-award-section {
+      background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%);
+      border: 1px solid #ffe082;
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-top: 20px;
+    }
+    .medal-award-title {
+      font-size: 0.78rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: #f57f17; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .medal-select-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .medal-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px;
+      border: 2px solid var(--color-border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      background: white;
+      font-size: 0.83rem; font-weight: 500;
+      color: var(--color-text-primary);
+      user-select: none;
+    }
+    .medal-opt:hover { border-color: #ffa000; background: #fff8e1; }
+    .medal-opt.selected { border-color: #ffa000; background: #fff8e1; box-shadow: 0 0 0 3px rgba(255,160,0,0.15); }
+    .medal-opt .medal-opt-icon { font-size: 22px; flex-shrink: 0; }
+    .medal-opt .medal-opt-name { font-size: 0.8rem; line-height: 1.3; }
+    .medal-opt .medal-opt-pts { font-size: 0.7rem; color: var(--color-text-muted); }
+
+    .awarded-medals-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .awarded-medal-chip {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: #fff9c4; border: 1px solid #f9a825;
+      border-radius: 100px; padding: 5px 10px 5px 8px;
+      font-size: 0.78rem; font-weight: 600; color: #5d4037;
+    }
+    .awarded-medal-chip .revoke-btn {
+      background: none; border: none; cursor: pointer;
+      color: #e53935; font-size: 14px; line-height: 1;
+      padding: 0 2px; margin-left: 2px;
+      transition: opacity 0.15s;
+    }
+    .awarded-medal-chip .revoke-btn:hover { opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -196,17 +249,22 @@
         <span class="material-icons-outlined">eco</span> WASTE2WORTH
       </div>
       <nav class="sidebar-nav">
-        <a href="/dashboard/admin" class="nav-item">
-          <span class="material-icons-outlined">admin_panel_settings</span> System Admin
+        <a href="/dashboard/admin/waste-portal" class="nav-item">
+          <span class="material-icons-outlined">recycling</span> Waste Portal
+        </a>
+        <a href="/dashboard/admin/product-story" class="nav-item">
+          <span class="material-icons-outlined">menu_book</span> Product Stories
+        </a>
+        <a href="/dashboard/admin/achievements" class="nav-item">
+          <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
+        </a>
+        <a href="/dashboard/admin/price-directory" class="nav-item">
+          <span class="material-icons-outlined">sell</span> Price Directory
         </a>
         <a href="/dashboard/admin/volunteers" class="nav-item active">
           <span class="material-icons-outlined">volunteer_activism</span> Volunteers
         </a>
-        <a href="/dashboard/admin/campaign-qr" class="nav-item">
-          <span class="material-icons-outlined">qr_code_2</span> Generate QR Code
-        </a>
-        <div class="nav-section-title">Account</div>
-        <a href="#" id="logoutBtn" class="nav-item">
+        <a href="/logout" id="logoutBtn" class="nav-item">
           <span class="material-icons-outlined">logout</span> Logout
         </a>
       </nav>
@@ -300,7 +358,90 @@
             </table>
           </div>
         </div>
+
+        <!-- ── Environmental Activities Management Card ─────────────── -->
+        <div class="card mt-lg animate-slide-up" style="margin-top:28px;">
+          <div class="card-header" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+            <div>
+              <h2 class="card-title">🌿 Environmental Activities & Campaigns</h2>
+              <p style="font-size:0.82rem;color:var(--color-text-secondary);margin:4px 0 0;">Create and manage official activities for volunteers to participate in and log.</p>
+            </div>
+            <button class="btn btn-primary-gradient" id="btnOpenCreateActivityModal" style="font-size:0.875rem;padding:9px 18px;">
+              <span class="material-icons-outlined" style="font-size:18px;">add_circle</span> Post New Activity
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Activity Title</th>
+                  <th>Category</th>
+                  <th>Location</th>
+                  <th>Scheduled Date</th>
+                  <th>Completions</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="adminActivitiesTbody">
+                <tr><td colspan="7" class="text-center"><div class="spinner"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </main>
+    </div>
+  </div>
+
+  <!-- ── Modal: Create New Activity ──────────────────────────── -->
+  <div class="vol-modal-overlay" id="createActivityModalOverlay">
+    <div class="vol-modal" style="max-width:540px;">
+      <div class="vol-modal-header">
+        <h2>🌱 Post New Environmental Activity</h2>
+        <button class="btn-close-modal" id="btnCloseActivityModal">&times;</button>
+      </div>
+      <div class="vol-modal-body">
+        <form id="createActivityForm">
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" for="newActTitle" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">Activity Title *</label>
+            <input type="text" id="newActTitle" class="form-input" style="width:100%;" placeholder="e.g. Dhanmondi Lake Plastic Cleanup" required>
+          </div>
+
+          <div class="form-group" style="margin-bottom:14px;">
+            <label class="form-label" for="newActCategory" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">Category *</label>
+            <select id="newActCategory" class="form-input" style="width:100%;" required>
+              <option value="" disabled selected>Select category…</option>
+              <option value="Recycling">♻️ Recycling</option>
+              <option value="Waste Collection">🗑️ Waste Collection</option>
+              <option value="Tree Planting">🌱 Tree Planting</option>
+              <option value="Reuse/Upcycling">🔄 Reuse/Upcycling</option>
+              <option value="Other Environmental Activity">🌍 Other Environmental Activity</option>
+            </select>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+            <div class="form-group">
+              <label class="form-label" for="newActLocation" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">Location</label>
+              <input type="text" id="newActLocation" class="form-input" style="width:100%;" placeholder="e.g. Gulshan Lake Park">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="newActDate" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">Scheduled Date</label>
+              <input type="date" id="newActDate" class="form-input" style="width:100%;">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-bottom:20px;">
+            <label class="form-label" for="newActDesc" style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:6px;">Instructions / Description</label>
+            <textarea id="newActDesc" class="form-input" rows="3" style="width:100%;resize:vertical;" placeholder="Describe what volunteers will do, meeting points, what to bring…"></textarea>
+          </div>
+
+          <button type="submit" id="btnSubmitNewActivity" class="btn btn-primary-gradient btn-block" style="width:100%;padding:12px;">
+            <span class="material-icons-outlined">campaign</span> Publish Activity for Volunteers
+          </button>
+        </form>
+      </div>
     </div>
   </div>
 
@@ -366,10 +507,353 @@
 
         <div class="modal-section-title">Experience</div>
         <div id="modalExperience" style="font-size:0.9rem; color:var(--color-text-primary); line-height:1.6; white-space:pre-wrap; background:var(--color-bg-body); padding:14px; border-radius:10px;">—</div>
+
+        <!-- ── Medal Award Section ───────────────────────────── -->
+        <div class="medal-award-section" id="medalAwardSection">
+          <div class="medal-award-title">
+            <span>🏅</span> Award Achievement Medal
+          </div>
+
+          <!-- Existing medals -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:0.72rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Medals Held</div>
+            <div id="awardedMedalsList"><span style="font-size:0.8rem;color:var(--color-text-muted);">None yet.</span></div>
+          </div>
+
+          <!-- Medal picker -->
+          <div style="font-size:0.72rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Select Medal</div>
+          <div class="medal-select-grid" id="medalOptGrid">
+            <!-- rendered by JS -->
+          </div>
+
+          <!-- Reason -->
+          <div style="margin-bottom:12px;">
+            <label style="font-size:0.72rem;font-weight:600;color:var(--color-text-muted);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Citation / Reason (optional)</label>
+            <textarea id="medalReason" rows="2"
+              style="width:100%;padding:10px 12px;border:1px solid var(--color-border);border-radius:8px;font-family:inherit;font-size:0.85rem;resize:vertical;outline:none;background:white;"
+              placeholder="e.g. Outstanding effort during Dhaka Lake Cleanup Campaign"></textarea>
+          </div>
+
+          <button id="awardMedalBtn" class="btn btn-primary-gradient" style="width:100%;">
+            <span class="material-icons-outlined" style="font-size:18px;">workspace_premium</span>
+            Award Medal
+          </button>
+        </div>
+
       </div>
     </div>
   </div>
 
   <script src="/js/app.js" defer></script>
+
+  <!-- ── Medal Feature: Self-contained inline JS ──────────────── -->
+  <script>
+  (function() {
+    'use strict';
+
+    const MEDALS = [
+      { key: 'gold_champion',  icon: '🥇', name: 'Gold Eco Champion',        points: 100 },
+      { key: 'community_hero', icon: '🏅', name: 'Community Impact Hero',     points: 75  },
+      { key: 'green_leader',   icon: '⭐', name: 'Green Leadership Award',    points: 75  },
+      { key: 'special_rec',    icon: '🎖️', name: 'Special Recognition Medal', points: 50  },
+    ];
+
+    let currentVolunteerId = null;
+    let selectedMedalKey   = null;
+
+    /* ── Build medal picker cards ── */
+    function buildMedalPicker() {
+      const grid = document.getElementById('medalOptGrid');
+      if (!grid) return;
+      grid.innerHTML = MEDALS.map(m => `
+        <div class="medal-opt" data-key="${m.key}" onclick="window.selectMedal('${m.key}')">
+          <span class="medal-opt-icon">${m.icon}</span>
+          <div>
+            <div class="medal-opt-name">${m.name}</div>
+            <div class="medal-opt-pts">+${m.points} pts</div>
+          </div>
+        </div>`).join('');
+    }
+
+    window.selectMedal = function(key) {
+      selectedMedalKey = key;
+      document.querySelectorAll('.medal-opt').forEach(el =>
+        el.classList.toggle('selected', el.dataset.key === key));
+    };
+
+    /* ── Load medals for a volunteer ── */
+    async function loadMedals(vid) {
+      const box = document.getElementById('awardedMedalsList');
+      if (!box) return;
+      box.innerHTML = '<span style="font-size:0.8rem;color:var(--color-text-muted);">Loading...</span>';
+      try {
+        const res  = await fetch(`/api/medals/volunteer/${vid}`, { credentials: 'include' });
+        const list = await res.json();
+        if (!Array.isArray(list) || !list.length) {
+          box.innerHTML = '<span style="font-size:0.8rem;color:var(--color-text-muted);">No medals yet.</span>';
+          return;
+        }
+        box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;">' +
+          list.map(m => `
+            <span class="awarded-medal-chip" id="chip-${m.id}">
+              ${m.medalIcon} ${m.medalName}
+              <button class="revoke-btn" title="Revoke" onclick="window.revokeMedal(${m.id})">✕</button>
+            </span>`).join('') + '</div>';
+      } catch {
+        box.innerHTML = '<span style="color:#e53935;font-size:0.8rem;">Failed to load medals.</span>';
+      }
+    }
+
+    /* ── Revoke a medal ── */
+    window.revokeMedal = async function(medalId) {
+      if (!confirm('Revoke this medal from the volunteer?')) return;
+      try {
+        const res = await fetch(`/api/medals/${medalId}`, { method: 'DELETE', credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const chip = document.getElementById(`chip-${medalId}`);
+        if (chip) chip.remove();
+        showMedalToast('Medal revoked.', 'info');
+      } catch {
+        showMedalToast('Failed to revoke medal.', 'error');
+      }
+    };
+
+    /* ── Reset medal UI state ── */
+    function resetMedalUI() {
+      selectedMedalKey = null;
+      document.querySelectorAll('.medal-opt').forEach(el => el.classList.remove('selected'));
+      const reason = document.getElementById('medalReason');
+      if (reason) reason.value = '';
+      const box = document.getElementById('awardedMedalsList');
+      if (box) box.innerHTML = '<span style="font-size:0.8rem;color:var(--color-text-muted);">Loading...</span>';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      buildMedalPicker();
+
+      /* ── Event delegation: detect row click → capture volunteer ID ──
+         Rows are rendered as: <tr class="vol-table-row" data-id="123">
+         We use document-level delegation so it works even after table re-renders. */
+      document.addEventListener('click', (e) => {
+        const row = e.target.closest('.vol-table-row[data-id]');
+        if (!row) return;
+        currentVolunteerId = row.dataset.id;
+        resetMedalUI();
+        // Wait for the modal animation (~300ms) then load medals
+        setTimeout(() => loadMedals(currentVolunteerId), 380);
+      });
+
+      /* ── Award medal ── */
+      const btn = document.getElementById('awardMedalBtn');
+      if (!btn) return;
+
+      btn.addEventListener('click', async () => {
+        if (!currentVolunteerId) { showMedalToast('Open a volunteer first.', 'error'); return; }
+        if (!selectedMedalKey)   { showMedalToast('Select a medal to award.', 'error'); return; }
+
+        const reason = (document.getElementById('medalReason')?.value || '').trim();
+        btn.disabled  = true;
+        btn.innerHTML = '<span style="display:inline-block;animation:spin 1s linear infinite;font-size:18px;">⟳</span> Awarding…';
+
+        try {
+          const res = await fetch(`/api/medals/award/${currentVolunteerId}`, {
+            method:      'POST',
+            credentials: 'include',
+            headers:     { 'Content-Type': 'application/json' },
+            body:        JSON.stringify({ medalKey: selectedMedalKey, reason }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed');
+
+          const medal = MEDALS.find(m => m.key === selectedMedalKey);
+          showMedalToast(`${medal.icon} ${medal.name} awarded! +${data.pointsAwarded} pts 🎉`, 'success');
+          selectedMedalKey = null;
+          document.querySelectorAll('.medal-opt').forEach(el => el.classList.remove('selected'));
+          document.getElementById('medalReason').value = '';
+          await loadMedals(currentVolunteerId);
+        } catch (err) {
+          showMedalToast(err.message || 'Could not award medal.', 'error');
+        } finally {
+          btn.disabled  = false;
+          btn.innerHTML = '<span class="material-icons-outlined" style="font-size:18px;">workspace_premium</span> Award Medal';
+        }
+      });
+    });
+
+    /* ── Toast helper ── */
+    function showMedalToast(msg, type) {
+      const bg = type === 'success' ? '#2e7d32' : type === 'info' ? '#1565c0' : '#b71c1c';
+      const t  = document.createElement('div');
+      t.style.cssText = `position:fixed;bottom:28px;right:28px;z-index:99999;
+        background:${bg};color:#fff;padding:13px 22px;border-radius:12px;
+        font-size:0.875rem;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,0.25);
+        max-width:320px;line-height:1.4;`;
+      t.textContent = msg;
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 3800);
+    }
+
+    /* ── spin keyframe ── */
+    if (!document.getElementById('medal-spin-style')) {
+      const s = document.createElement('style');
+      s.id = 'medal-spin-style';
+      s.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+      document.head.appendChild(s);
+    }
+  })();
+
+  /* ── Environmental Activities Admin Management Logic ───────── */
+  (function() {
+    const actModal = document.getElementById('createActivityModalOverlay');
+    const btnOpen  = document.getElementById('btnOpenCreateActivityModal');
+    const btnClose = document.getElementById('btnCloseActivityModal');
+    const form     = document.getElementById('createActivityForm');
+    const tbody    = document.getElementById('adminActivitiesTbody');
+
+    if (btnOpen && actModal) {
+      btnOpen.addEventListener('click', () => {
+        form.reset();
+        actModal.classList.add('open');
+      });
+    }
+    if (btnClose && actModal) {
+      btnClose.addEventListener('click', () => actModal.classList.remove('open'));
+    }
+    if (actModal) {
+      actModal.addEventListener('click', (e) => {
+        if (e.target === actModal) actModal.classList.remove('open');
+      });
+    }
+
+    const catEmoji = (c) => {
+      const map = { 'Recycling': '♻️', 'Waste Collection': '🗑️', 'Tree Planting': '🌱', 'Reuse/Upcycling': '🔄', 'Other Environmental Activity': '🌍' };
+      return map[c] || '🌿';
+    };
+
+    window.loadAdminActivities = async function() {
+      if (!tbody) return;
+      try {
+        const res = await fetch('/api/admin-activities', { credentials: 'include' });
+        if (!res.ok) throw new Error('Failed to load activities');
+        const activities = await res.json();
+
+        if (!activities || !activities.length) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="padding:24px;color:var(--color-text-secondary);">No environmental activities created yet. Click "Post New Activity" above to add one.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = activities.map(a => `
+          <tr id="act-row-${a.id}">
+            <td>
+              <div style="font-weight:700;color:var(--color-text-primary);font-size:0.92rem;">
+                ${catEmoji(a.category)} ${a.title}
+              </div>
+              ${a.description ? `<div style="font-size:0.8rem;color:var(--color-text-secondary);margin-top:2px;max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${a.description}">${a.description}</div>` : ''}
+            </td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;background:var(--color-primary-bg);color:var(--color-primary-dark);border-radius:100px;font-size:0.75rem;font-weight:600;">
+                ${a.category}
+              </span>
+            </td>
+            <td style="font-size:0.85rem;color:var(--color-text-secondary);">${a.location || '—'}</td>
+            <td style="font-size:0.85rem;white-space:nowrap;">${a.activityDate ? new Date(a.activityDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Flexible'}</td>
+            <td>
+              <span style="display:inline-flex;align-items:center;gap:4px;background:#e8f5e9;color:#2e7d32;font-weight:700;font-size:0.8rem;padding:3px 10px;border-radius:100px;">
+                <span class="material-icons-outlined" style="font-size:14px;">check_circle</span> ${a.completionsCount || 0}
+              </span>
+            </td>
+            <td>
+              <label class="toggle-pill" title="${a.isActive ? 'Active - Visible to volunteers' : 'Inactive - Hidden from volunteers'}" style="display:inline-flex;align-items:center;cursor:pointer;">
+                <input type="checkbox" ${a.isActive ? 'checked' : ''} onchange="toggleAdminActivity(${a.id}, this.checked)">
+                <span style="font-size:0.78rem;font-weight:600;margin-left:8px;color:${a.isActive ? '#2e7d32' : 'var(--color-text-muted)'};">
+                  ${a.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </label>
+            </td>
+            <td>
+              <button class="btn btn-outline" style="padding:4px 8px;font-size:0.75rem;color:#ef4444;border-color:#fca5a5;" onclick="deleteAdminActivity(${a.id})">
+                <span class="material-icons-outlined" style="font-size:15px;">delete</span>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center" style="color:#ef4444;padding:24px;">Failed to load activities.</td></tr>';
+      }
+    };
+
+    window.toggleAdminActivity = async function(id, isActive) {
+      try {
+        const res = await fetch(`/api/admin-activities/${id}/toggle`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isActive: isActive ? 1 : 0 })
+        });
+        if (!res.ok) throw new Error();
+        loadAdminActivities();
+      } catch {
+        alert('Failed to update activity status.');
+        loadAdminActivities();
+      }
+    };
+
+    window.deleteAdminActivity = async function(id) {
+      if (!confirm('Are you sure you want to delete this activity?')) return;
+      try {
+        const res = await fetch(`/api/admin-activities/${id}`, {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        if (!res.ok) throw new Error();
+        loadAdminActivities();
+      } catch {
+        alert('Failed to delete activity.');
+      }
+    };
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = document.getElementById('btnSubmitNewActivity');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Publishing…';
+
+        try {
+          const body = {
+            title: document.getElementById('newActTitle').value.trim(),
+            category: document.getElementById('newActCategory').value,
+            location: document.getElementById('newActLocation').value.trim(),
+            activityDate: document.getElementById('newActDate').value || null,
+            description: document.getElementById('newActDesc').value.trim(),
+          };
+
+          const res = await fetch('/api/admin-activities', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Failed to create activity');
+
+          actModal.classList.remove('open');
+          form.reset();
+          loadAdminActivities();
+        } catch (err) {
+          alert(err.message || 'Failed to create activity.');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = '<span class="material-icons-outlined">campaign</span> Publish Activity for Volunteers';
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAdminActivities();
+    });
+  })();
+  </script>
 </body>
 </html>

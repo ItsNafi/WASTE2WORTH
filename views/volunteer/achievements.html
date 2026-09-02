@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Achievements & Badges — WASTE2WORTH</title>
+  <meta name="description" content="Track your eco-activities, complete environmental tasks, and earn milestone achievement badges on WASTE2WORTH.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Tab Nav ─────────────────────────────────────────── */
+    .tab-nav {
+      display: flex; gap: 4px;
+      background: var(--color-bg-body);
+      border-radius: var(--radius-lg);
+      padding: 4px; margin-bottom: var(--space-lg);
+      border: 1px solid var(--color-border);
+    }
+    .tab-btn {
+      flex: 1; padding: 10px var(--space-md);
+      border: none; background: transparent;
+      border-radius: var(--radius-md);
+      font-family: var(--font-family); font-size: 14px; font-weight: 500;
+      color: var(--color-text-secondary); cursor: pointer;
+      transition: all var(--transition-base);
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .tab-btn.active { background: var(--color-bg-card); color: var(--color-primary); box-shadow: var(--shadow-sm); }
+    .tab-btn:hover:not(.active) { color: var(--color-primary); background: rgba(46,125,50,.06); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Progress Banner ─────────────────────────────────── */
+    .progress-banner {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 60%, #388e3c 100%);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      color: #fff;
+      margin-bottom: var(--space-lg);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(27,94,32,0.28);
+    }
+    .progress-banner::before {
+      content: '';
+      position: absolute; top: -40px; right: -40px;
+      width: 200px; height: 200px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.06);
+    }
+    .progress-banner::after {
+      content: '';
+      position: absolute; bottom: -30px; right: 60px;
+      width: 120px; height: 120px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+    .banner-title {
+      font-size: 13px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; opacity: .75; margin-bottom: 6px;
+    }
+    .banner-count {
+      font-size: 48px; font-weight: 800; line-height: 1;
+      margin-bottom: 4px;
+    }
+    .banner-count-label { font-size: 14px; opacity: .75; margin-bottom: var(--space-lg); }
+    .banner-next { font-size: 13px; opacity: .85; margin-bottom: 8px; }
+    .banner-next strong { opacity: 1; }
+    .banner-unlocked-msg {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.15); border-radius: var(--radius-pill);
+      padding: 6px 16px; font-size: 13px; font-weight: 600;
+    }
+    .banner-bar-track {
+      background: rgba(255,255,255,0.20);
+      border-radius: var(--radius-pill); height: 8px;
+      margin-top: 8px; overflow: hidden;
+    }
+    .banner-bar-fill {
+      height: 100%; border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, #a5d6a7, #fff);
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+    .banner-more-label { font-size: 12px; opacity: .65; margin-top: 6px; }
+
+    /* ── Badge Cards ─────────────────────────────────────── */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-lg);
+      margin-bottom: var(--space-xl);
+    }
+    .badge-card {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--color-border);
+      padding: var(--space-xl);
+      position: relative;
+      transition: all var(--transition-base);
+      overflow: hidden;
+    }
+    .badge-card.earned {
+      border-color: #4caf50;
+      box-shadow: 0 0 0 4px rgba(76,175,80,.10), var(--shadow-elevated);
+    }
+    .badge-card.locked { opacity: .85; }
+    .badge-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-elevated); }
+    .badge-card.earned:hover { box-shadow: 0 0 0 4px rgba(76,175,80,.15), 0 12px 40px rgba(0,0,0,.12); }
+
+    .badge-card-shine {
+      position: absolute; top: 0; left: -60%;
+      width: 40%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.6s ease;
+    }
+    .badge-card.earned:hover .badge-card-shine { left: 120%; }
+
+    .badge-emoji {
+      font-size: 44px; line-height: 1;
+      margin-bottom: var(--space-sm);
+      display: block;
+      filter: drop-shadow(0 4px 8px rgba(0,0,0,.12));
+    }
+    .badge-card.locked .badge-emoji { filter: grayscale(0.4); }
+
+    .badge-name {
+      font-size: 18px; font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 4px;
+    }
+    .badge-req {
+      font-size: 12px; font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-bottom: var(--space-md);
+    }
+
+    .badge-status-earned {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #e8f5e9; color: #2e7d32;
+      border-radius: var(--radius-pill);
+      padding: 5px 14px; font-size: 13px; font-weight: 700;
+      margin-bottom: var(--space-sm);
+    }
+    .badge-status-locked {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--color-bg-body); color: var(--color-text-muted);
+      border-radius: var(--radius-pill);
+      padding: 5px 14px; font-size: 13px; font-weight: 600;
+      margin-bottom: var(--space-sm);
+    }
+    .badge-earned-date {
+      font-size: 12px; color: var(--color-text-secondary);
+      margin-bottom: var(--space-md);
+    }
+
+    .badge-progress-label {
+      display: flex; justify-content: space-between;
+      font-size: 12px; color: var(--color-text-secondary);
+      margin-top: var(--space-md); margin-bottom: 6px;
+    }
+    .badge-progress-track {
+      background: var(--color-bg-body);
+      border-radius: var(--radius-pill); height: 6px; overflow: hidden;
+    }
+    .badge-progress-fill {
+      height: 100%; border-radius: var(--radius-pill);
+      background: linear-gradient(90deg, var(--color-primary-light), var(--color-primary));
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Log Activity Form ───────────────────────────────── */
+    .form-textarea {
+      width: 100%; padding: 10px var(--space-md);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-family); font-size: 14px;
+      color: var(--color-text-primary);
+      resize: vertical; min-height: 80px;
+      outline: none; transition: border-color var(--transition-fast);
+      background: var(--color-bg-card);
+    }
+    .form-textarea:focus { border-color: var(--color-primary-light); box-shadow: 0 0 0 3px rgba(76,175,80,.15); }
+
+    .activity-status-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 600;
+      background: #e8f5e9; color: #2e7d32;
+    }
+    .activity-type-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-pill);
+      font-size: 12px; font-weight: 500;
+      background: var(--color-primary-bg); color: var(--color-primary-dark);
+    }
+    .empty-state {
+      text-align: center; padding: var(--space-2xl) var(--space-lg);
+      color: var(--color-text-secondary);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: var(--space-md); opacity: .5; }
+    .empty-state p { font-size: 14px; margin-top: 6px; }
+
+    /* ── Congratulations Modal ───────────────────────────── */
+    .badge-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(4px);
+      z-index: 9000;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--transition-slow);
+    }
+    .badge-modal-overlay.visible {
+      opacity: 1; pointer-events: all;
+    }
+    .badge-modal {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-xl);
+      padding: var(--space-xl) var(--space-2xl);
+      max-width: 420px; width: 90%;
+      text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.22);
+      transform: scale(0.88) translateY(20px);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+      position: relative;
+    }
+    .badge-modal-overlay.visible .badge-modal {
+      transform: scale(1) translateY(0);
+    }
+    .badge-modal-confetti {
+      font-size: 48px; margin-bottom: var(--space-sm);
+      animation: bounce 0.6s ease 0.3s both;
+    }
+    @keyframes bounce {
+      0%   { transform: scale(0.5); opacity: 0; }
+      70%  { transform: scale(1.15); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .badge-modal-title {
+      font-size: 22px; font-weight: 800;
+      color: var(--color-text-primary);
+      margin-bottom: var(--space-sm);
+    }
+    .badge-modal-subtitle {
+      font-size: 14px; color: var(--color-text-secondary);
+      margin-bottom: var(--space-lg);
+      line-height: 1.6;
+    }
+    .badge-modal-badge-name {
+      font-size: 28px; font-weight: 800;
+      color: var(--color-primary);
+      margin-bottom: var(--space-sm);
+    }
+    .badge-modal-close {
+      background: var(--color-primary);
+      color: #fff; border: none;
+      border-radius: var(--radius-pill);
+      padding: 12px 32px;
+      font-family: var(--font-family); font-size: 14px; font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition-fast), transform var(--transition-fast);
+      margin-top: var(--space-md);
+    }
+    .badge-modal-close:hover { background: var(--color-primary-dark); transform: translateY(-1px); }
+
+    .activity-count-footer {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 8px; padding: var(--space-md) var(--space-lg);
+      border-top: 1px solid var(--color-border);
+      font-size: 14px; font-weight: 600; color: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── Volunteer Sidebar ────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="material-icons-outlined">eco</span> WASTE2WORTH
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/volunteer/profile" class="nav-item">
+        <span class="material-icons-outlined">account_circle</span> Volunteer Profile
+      </a>
+      <a href="/volunteer/register" class="nav-item">
+        <span class="material-icons-outlined">how_to_reg</span> Register / Update
+      </a>
+      <a href="/volunteer/achievements" class="nav-item active">
+        <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
+      </a>
+      <a href="/logout" id="logoutBtn" class="nav-item">
+        <span class="material-icons-outlined">logout</span> Logout
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">&copy; 2026 WASTE2WORTH</div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+
+    <!-- ── Header ─────────────────────────────────────── -->
+    <header class="header">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <div class="header-search">
+        <span class="material-icons-outlined">emoji_events</span>
+        <input type="text" placeholder="Volunteer Achievements" aria-label="Page title" readonly style="cursor:default;">
+      </div>
+      <div class="header-user">
+        <div class="green-points-badge">
+          <span class="material-icons-outlined" style="font-size:16px;">stars</span>
+          <span class="green-points-value">0</span>
+        </div>
+        <div class="user-info">
+          <span class="user-name">Volunteer</span>
+          <span class="user-role">Volunteer</span>
+        </div>
+        <div class="user-avatar">V</div>
+      </div>
+    </header>
+
+    <!-- ── Main Content ───────────────────────────────── -->
+    <main class="main-content">
+      <div class="page-header animate-fade-in">
+        <h1 class="page-title">🏆 Volunteer Milestone Achievements</h1>
+        <p class="page-subtitle">Participate in environmental activities, mark them as completed, and unlock achievement badges & medals of honor.</p>
+      </div>
+
+      <!-- Achievement Progress Banner -->
+      <div class="progress-banner animate-fade-in" id="progressBanner">
+        <div class="banner-title">🏆 Your Activity Progress</div>
+        <div class="banner-count" id="bannerCount">0</div>
+        <div class="banner-count-label">Completed Eco-Activities</div>
+        <div id="bannerNextSection">
+          <div class="banner-next">Next Badge: <strong id="bannerNextName">🌱 Eco Starter</strong></div>
+          <div class="banner-bar-track">
+            <div class="banner-bar-fill" id="bannerBarFill" style="width:0%"></div>
+          </div>
+          <div class="banner-more-label" id="bannerMoreLabel">1 more activity to unlock</div>
+        </div>
+      </div>
+
+      <!-- Medals of Honor (Awarded by Admin) -->
+      <div id="myMedalsSection" style="display:none;margin-bottom:var(--space-lg);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <span style="font-size:1.2rem;">🏅</span>
+          <h2 style="font-size:1rem;font-weight:700;color:var(--color-text-primary);margin:0;">Medals of Honor Awarded to You</h2>
+          <span style="font-size:0.72rem;color:var(--color-text-muted);background:var(--color-bg-card);border:1px solid var(--color-border);padding:2px 10px;border-radius:100px;margin-left:auto;">Awarded by Administrator</span>
+        </div>
+        <div id="myMedalsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;"></div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tab-nav animate-slide-up">
+        <button class="tab-btn active" data-tab="badges" id="tabBadges">
+          <span class="material-icons-outlined" style="font-size:18px;">workspace_premium</span> My Milestone Badges
+        </button>
+        <button class="tab-btn" data-tab="log" id="tabLog">
+          <span class="material-icons-outlined" style="font-size:18px;">add_task</span> Log & Complete Activity
+        </button>
+        <button class="tab-btn" data-tab="history" id="tabHistory">
+          <span class="material-icons-outlined" style="font-size:18px;">history</span> My Completed Activities
+        </button>
+      </div>
+
+      <!-- ── Tab: My Badges ────────────────────────────── -->
+      <div class="tab-panel active" id="panelBadges">
+        <div class="badges-grid" id="badgesGrid">
+          <div class="loading-spinner" style="grid-column:1/-1;"><div class="spinner"></div></div>
+        </div>
+      </div>
+
+      <!-- ── Tab: Log & Complete Activity ─────────────── -->
+      <div class="tab-panel" id="panelLog">
+        <div class="form-row">
+          <div class="card animate-slide-up">
+            <div class="card-header">
+              <h2 class="card-title">Participate & Mark Activity Completed</h2>
+              <p style="font-size:12px;color:var(--color-text-secondary);margin-top:4px;">Select an official environmental activity published by the administrators.</p>
+            </div>
+            <form id="activityForm">
+              <div class="form-group">
+                <label class="form-label" for="actSelect">Official Environmental Activity *</label>
+                <select id="actSelect" name="activityId" class="form-select" required>
+                  <option value="" disabled selected>Loading available activities...</option>
+                </select>
+              </div>
+
+              <!-- Activity details box -->
+              <div id="selectedActDetails" style="display:none;background:var(--color-primary-bg);border:1px solid rgba(46,125,50,0.2);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                  <strong id="actDetailTitle" style="color:var(--color-primary-dark);font-size:14px;"></strong>
+                  <span id="actDetailCategory" style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;background:#fff;color:var(--color-primary);"></span>
+                </div>
+                <div style="font-size:12px;color:var(--color-text-secondary);display:flex;gap:14px;margin-bottom:6px;flex-wrap:wrap;">
+                  <span>📍 <span id="actDetailLocation"></span></span>
+                  <span>📅 <span id="actDetailDate"></span></span>
+                </div>
+                <div id="actDetailDesc" style="font-size:12px;color:var(--color-text-primary);line-height:1.5;"></div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="actNotes">Your Completion Notes / What You Accomplished</label>
+                <textarea id="actNotes" name="description" class="form-textarea"
+                  placeholder="e.g. Participated for 2 hours, collected 8kg of plastic recyclables..."></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="actDate">Completion Date *</label>
+                <input type="date" id="actDate" name="activityDate" class="form-input" required>
+              </div>
+              <button type="submit" id="actSubmitBtn" class="btn btn-primary-gradient btn-block">
+                <span class="material-icons-outlined">task_alt</span> Mark Activity as Completed
+              </button>
+            </form>
+          </div>
+
+          <!-- Info card -->
+          <div class="card animate-slide-up">
+            <div class="card-header" style="padding-bottom:0;">
+              <h2 class="card-title">How Badges & Milestones Work</h2>
+            </div>
+            <div style="padding:var(--space-lg);">
+              <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:var(--space-md);line-height:1.7;">
+                Participate in environmental campaigns and log your completed activities. Each submission increments your verified activity count and automatically unlocks recognition badges.
+              </p>
+              <div style="display:flex;flex-direction:column;gap:var(--space-md);">
+                <div style="display:flex;align-items:center;gap:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);">
+                  <span style="font-size:28px;">🌱</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:var(--color-primary-dark);">Eco Starter</div>
+                    <div style="font-size:12px;color:var(--color-text-secondary);">Complete 1 verified activity</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);">
+                  <span style="font-size:28px;">♻️</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:var(--color-primary-dark);">Eco Contributor</div>
+                    <div style="font-size:12px;color:var(--color-text-secondary);">Complete 5 verified activities</div>
+                  </div>
+                </div>
+                <div style="display:flex;align-items:center;gap:var(--space-md);padding:var(--space-md);background:var(--color-primary-bg);border-radius:var(--radius-sm);">
+                  <span style="font-size:28px;">🌍</span>
+                  <div>
+                    <div style="font-weight:600;font-size:14px;color:var(--color-primary-dark);">Eco Champion</div>
+                    <div style="font-size:12px;color:var(--color-text-secondary);">Complete 10 verified activities</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Tab: My Activities History ────────────────── -->
+      <div class="tab-panel" id="panelHistory">
+        <div class="card animate-slide-up">
+          <div class="card-header">
+            <h2 class="card-title">Completed Activities History</h2>
+          </div>
+          <div id="historyTableWrap">
+            <div class="loading-spinner"><div class="spinner"></div></div>
+          </div>
+          <div class="activity-count-footer" id="activityCountFooter" style="display:none;">
+            <span class="material-icons-outlined" style="font-size:18px;color:var(--color-primary);">task_alt</span>
+            Total Completed Activities: <span id="footerCount">0</span>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ── Congratulations Modal ──────────────────────────────── -->
+<div class="badge-modal-overlay" id="badgeModalOverlay" role="dialog" aria-modal="true" aria-labelledby="badgeModalTitle">
+  <div class="badge-modal" id="badgeModal">
+    <div class="badge-modal-confetti">🎉</div>
+    <div class="badge-modal-title" id="badgeModalTitle">Congratulations!</div>
+    <div id="badgeModalEmoji" style="font-size:52px;margin:var(--space-sm 0);"></div>
+    <div class="badge-modal-badge-name" id="badgeModalBadgeName"></div>
+    <div class="badge-modal-subtitle" id="badgeModalSubtitle"></div>
+    <button class="badge-modal-close" id="badgeModalClose">Awesome! 🌿</button>
+  </div>
+</div>
+
+<script src="/js/app.js" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const $ = id => document.getElementById(id);
+
+  const fmtDate = (raw) => {
+    if (!raw) return '—';
+    const d = new Date(raw);
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const activityEmoji = (type) => {
+    const map = {
+      'Recycling':                   '♻️',
+      'Waste Collection':            '🗑️',
+      'Tree Planting':               '🌱',
+      'Reuse/Upcycling':             '🔄',
+      'Other Environmental Activity':'🌍',
+    };
+    return map[type] || '🌿';
+  };
+
+  /* ── Sidebar toggle ──────────────────────────────────── */
+  const sidebarToggle = $('sidebarToggle');
+  const appLayout = document.querySelector('.app-layout');
+  if (sidebarToggle && appLayout) {
+    sidebarToggle.addEventListener('click', () => appLayout.classList.toggle('sidebar-collapsed'));
+  }
+
+  /* ── Tab switching ───────────────────────────────────── */
+  document.querySelectorAll('.tab-nav .tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-nav .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = document.getElementById('panel' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1));
+      if (panel) panel.classList.add('active');
+    });
+  });
+
+  /* ── Set today's date default ────────────────────────── */
+  const actDateInput = $('actDate');
+  if (actDateInput) {
+    const today = new Date().toISOString().split('T')[0];
+    actDateInput.value = today;
+    actDateInput.max   = today;
+  }
+
+  /* ── Render Progress Banner ──────────────────────────── */
+  const MILESTONES = [
+    { key: 'eco_starter',    emoji: '🌱', name: 'Eco Starter',    requirement: 1  },
+    { key: 'eco_contributor',emoji: '♻️', name: 'Eco Contributor', requirement: 5  },
+    { key: 'eco_champion',   emoji: '🌍', name: 'Eco Champion',    requirement: 10 },
+  ];
+
+  function renderBanner(count, badges) {
+    $('bannerCount').textContent = count;
+    const nextSection = $('bannerNextSection');
+
+    const nextBadge = MILESTONES.find(m => count < m.requirement);
+    if (!nextBadge) {
+      nextSection.innerHTML = `
+        <div class="banner-unlocked-msg">
+          <span class="material-icons-outlined">workspace_premium</span>
+          All milestone badges unlocked! You are an Eco Champion! 🎉
+        </div>`;
+      return;
+    }
+
+    const prevBadge = MILESTONES.slice().reverse().find(m => count >= m.requirement);
+    const base  = prevBadge ? prevBadge.requirement : 0;
+    const range = nextBadge.requirement - base;
+    const done  = count - base;
+    const pct   = Math.min(100, Math.round((done / range) * 100));
+    const more  = nextBadge.requirement - count;
+
+    $('bannerNextSection').innerHTML = `
+      <div class="banner-next">Next Badge: <strong>${nextBadge.emoji} ${nextBadge.name}</strong></div>
+      <div class="banner-bar-track">
+        <div class="banner-bar-fill" id="bannerBarFill" style="width:0%"></div>
+      </div>
+      <div class="banner-more-label">${more} more ${more === 1 ? 'activity' : 'activities'} to unlock</div>
+    `;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const fill = $('bannerBarFill');
+        if (fill) fill.style.width = pct + '%';
+      });
+    });
+  }
+
+  /* ── Render Badges ───────────────────────────────────── */
+  function renderBadges(badgeData) {
+    const grid = $('badgesGrid');
+    if (!badgeData || !badgeData.length) {
+      grid.innerHTML = '<p style="color:var(--color-text-secondary);padding:var(--space-lg);">No badge data.</p>';
+      return;
+    }
+
+    grid.innerHTML = badgeData.map(b => {
+      const progress = Math.min(b.progress, b.requirement);
+      const pct      = Math.min(100, Math.round((progress / b.requirement) * 100));
+
+      const statusHtml = b.earned
+        ? `<div class="badge-status-earned"><span class="material-icons-outlined" style="font-size:16px;">check_circle</span> Earned</div>
+           <div class="badge-earned-date">Earned on: ${fmtDate(b.earnedAt)}</div>`
+        : `<div class="badge-status-locked"><span class="material-icons-outlined" style="font-size:15px;">lock</span> Locked</div>
+           <div class="badge-progress-label">
+             <span>Progress</span><span>${progress} / ${b.requirement}</span>
+           </div>
+           <div class="badge-progress-track">
+             <div class="badge-progress-fill" data-pct="${pct}" style="width:0%"></div>
+           </div>`;
+
+      return `
+        <div class="badge-card ${b.earned ? 'earned' : 'locked'}" id="badgeCard_${b.key}">
+          <div class="badge-card-shine"></div>
+          <span class="badge-emoji">${b.emoji}</span>
+          <div class="badge-name">${b.name}</div>
+          <div class="badge-req">${b.requirementLabel}</div>
+          ${statusHtml}
+        </div>`;
+    }).join('');
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        grid.querySelectorAll('.badge-progress-fill').forEach(el => {
+          el.style.width = el.dataset.pct + '%';
+        });
+      });
+    });
+  }
+
+  /* ── Render History ──────────────────────────────────── */
+  function renderHistory(activities, count) {
+    const wrap = $('historyTableWrap');
+    const footer = $('activityCountFooter');
+    $('footerCount').textContent = count;
+
+    if (!activities || activities.length === 0) {
+      wrap.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">🌿</div>
+          <strong>No activities logged yet</strong>
+          <p>Participate in an environmental activity and mark it completed to start unlocking badges!</p>
+        </div>`;
+      footer.style.display = 'none';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Activity Type</th>
+              <th>Details / Notes</th>
+              <th>Completion Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${activities.map(a => `
+              <tr>
+                <td>
+                  <span class="activity-type-tag">
+                    ${activityEmoji(a.activityType)} ${a.activityType}
+                  </span>
+                </td>
+                <td style="font-size:13px;color:var(--color-text-secondary);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${a.description || '—'}</td>
+                <td style="font-size:13px;white-space:nowrap;">${fmtDate(a.activityDate)}</td>
+                <td><span class="activity-status-pill">✓ Completed</span></td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    footer.style.display = 'flex';
+  }
+
+  /* ── Modal ───────────────────────────────────────────── */
+  let modalQueue = [];
+  let modalOpen  = false;
+
+  function showNextModal() {
+    if (modalOpen || modalQueue.length === 0) return;
+    const badge = modalQueue.shift();
+    modalOpen = true;
+
+    $('badgeModalEmoji').textContent    = badge.emoji;
+    $('badgeModalBadgeName').textContent = badge.emoji + ' ' + badge.name;
+    $('badgeModalSubtitle').textContent  =
+      `Congratulations! You've unlocked the ${badge.name} badge for your eco-activities! Keep up the great work! 🌿`;
+
+    $('badgeModalOverlay').classList.add('visible');
+  }
+
+  $('badgeModalClose').addEventListener('click', () => {
+    $('badgeModalOverlay').classList.remove('visible');
+    modalOpen = false;
+    setTimeout(showNextModal, 400);
+  });
+
+  $('badgeModalOverlay').addEventListener('click', (e) => {
+    if (e.target === $('badgeModalOverlay')) {
+      $('badgeModalClose').click();
+    }
+  });
+
+  /* ── Load initial data ───────────────────────────────── */
+  async function loadBadges() {
+    try {
+      const res = await fetch('/api/badges/my-badges', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      renderBanner(data.count, data.badges);
+      renderBadges(data.badges);
+    } catch (err) {
+      $('badgesGrid').innerHTML = `<p style="color:var(--color-accent-red);padding:var(--space-lg);">Failed to load badges.</p>`;
+    }
+  }
+
+  async function loadHistory() {
+    try {
+      const res = await fetch('/api/badges/activities', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed');
+      const data = await res.json();
+      renderHistory(data.activities, data.count);
+    } catch (err) {
+      $('historyTableWrap').innerHTML = `<p style="color:var(--color-accent-red);padding:var(--space-lg);">Failed to load activity history.</p>`;
+    }
+  }
+
+  async function loadMyMedals() {
+    try {
+      const res  = await fetch('/api/medals/my', { credentials: 'include' });
+      if (!res.ok) return;
+      const list = await res.json();
+
+      const section = $('myMedalsSection');
+      const grid    = $('myMedalsGrid');
+      if (!section || !grid) return;
+
+      if (!list.length) {
+        section.style.display = 'none';
+        return;
+      }
+
+      section.style.display = 'block';
+      grid.innerHTML = list.map(m => `
+        <div style="
+          background: linear-gradient(135deg,#fff8e1,#fffde7);
+          border: 2px solid #ffd54f;
+          border-radius: 14px; padding: 18px 16px;
+          display: flex; flex-direction: column; gap: 6px;
+          box-shadow: 0 4px 16px rgba(255,193,7,0.18);
+          position: relative; overflow: hidden;">
+          <div style="font-size:36px;line-height:1;">${m.medalIcon}</div>
+          <div style="font-size:0.95rem;font-weight:700;color:#4e342e;">${m.medalName}</div>
+          ${m.reason ? `<div style="font-size:0.78rem;color:#795548;font-style:italic;line-height:1.4;">"${m.reason}"</div>` : ''}
+          <div style="font-size:0.72rem;color:#a1887f;margin-top:4px;">
+            Awarded by Admin &bull;
+            ${new Date(m.awardedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+          </div>
+          <div style="position:absolute;top:10px;right:10px;background:#fff9c4;color:#f57f17;font-size:0.68rem;font-weight:700;padding:3px 8px;border-radius:100px;border:1px solid #ffe082;">
+            +${m.pointsBonus || 0} pts
+          </div>
+        </div>`).join('');
+    } catch (_) {}
+  }
+
+  /* ── Load Available Admin Activities ─────────────────── */
+  let activeActivities = [];
+
+  async function loadAvailableActivities() {
+    const sel = $('actSelect');
+    if (!sel) return;
+    try {
+      const res = await fetch('/api/admin-activities?activeOnly=true', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load');
+      activeActivities = await res.json();
+
+      if (!activeActivities.length) {
+        sel.innerHTML = '<option value="" disabled selected>No active environmental activities available right now.</option>';
+        return;
+      }
+
+      sel.innerHTML = '<option value="" disabled selected>Select an environmental activity...</option>' +
+        activeActivities.map(a => `<option value="${a.id}">${activityEmoji(a.category)} ${a.title} (${a.category})</option>`).join('');
+
+    } catch (err) {
+      sel.innerHTML = '<option value="" disabled selected>Could not load activities.</option>';
+    }
+  }
+
+  const actSelect = $('actSelect');
+  if (actSelect) {
+    actSelect.addEventListener('change', (e) => {
+      const id = e.target.value;
+      const found = activeActivities.find(a => String(a.id) === String(id));
+      const box = $('selectedActDetails');
+      if (found && box) {
+        box.style.display = 'block';
+        $('actDetailTitle').textContent    = found.title;
+        $('actDetailCategory').textContent = found.category;
+        $('actDetailLocation').textContent = found.location || 'Flexible Location';
+        $('actDetailDate').textContent     = found.activityDate ? new Date(found.activityDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Open Schedule';
+        $('actDetailDesc').textContent     = found.description || 'Participate and contribute to environmental sustainability.';
+      } else if (box) {
+        box.style.display = 'none';
+      }
+    });
+  }
+
+  loadBadges();
+  loadHistory();
+  loadMyMedals();
+  loadAvailableActivities();
+
+  /* ── Activity Form Submit ────────────────────────────── */
+  const form      = $('activityForm');
+  const submitBtn = $('actSubmitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!$('actSelect').value) {
+      alert('Please select an environmental activity.');
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const origText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<span class="material-icons-outlined" style="animation:spin 1s linear infinite;display:inline-block;">sync</span> Saving...';
+
+    try {
+      const body = {
+        activityId:   $('actSelect').value,
+        description:  $('actNotes').value.trim(),
+        activityDate: $('actDate').value,
+      };
+
+      const res = await fetch('/api/badges/activities', {
+        method:      'POST',
+        credentials: 'include',
+        headers:     { 'Content-Type': 'application/json' },
+        body:        JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to log activity');
+
+      form.reset();
+      const today = new Date().toISOString().split('T')[0];
+      actDateInput.value = today;
+      const detailsBox = $('selectedActDetails');
+      if (detailsBox) detailsBox.style.display = 'none';
+
+      const badgeRes  = await fetch('/api/badges/my-badges', { credentials: 'include' });
+      const badgeData = await badgeRes.json();
+      renderBanner(badgeData.count, badgeData.badges);
+      renderBadges(badgeData.badges);
+      loadHistory();
+      loadAvailableActivities();
+
+      if (window.showToast) {
+        showToast('Activity marked as completed! 🌿', 'success');
+      }
+
+      if (data.newlyEarned && data.newlyEarned.length > 0) {
+        const badgesTabBtn = $('tabBadges');
+        if (badgesTabBtn) badgesTabBtn.click();
+        modalQueue.push(...data.newlyEarned);
+        setTimeout(showNextModal, 500);
+      }
+
+    } catch (err) {
+      if (window.showToast) showToast(err.message, 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = origText;
+    }
+  });
+
+});
+</script>
+</body>
+</html>

@@ -296,6 +296,22 @@
     .no-profile-cta .material-icons-outlined { font-size: 56px; color: var(--color-text-muted); }
     .no-profile-cta h2 { color: var(--color-text-secondary); margin: 12px 0 8px; font-size: 1.2rem; }
     .no-profile-cta p { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 20px; }
+
+    /* Medal Card Style in Profile */
+    .profile-medal-card {
+      background: linear-gradient(135deg, #fff8e1 0%, #fffde7 100%);
+      border: 1.5px solid #ffe082;
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(255,193,7,0.15);
+    }
+    .profile-medal-icon { font-size: 32px; line-height: 1; }
+    .profile-medal-title { font-size: 0.9rem; font-weight: 700; color: #5d4037; }
+    .profile-medal-reason { font-size: 0.78rem; color: #795548; font-style: italic; margin-top: 2px; }
+    .profile-medal-meta { font-size: 0.72rem; color: #a1887f; margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -305,27 +321,16 @@
         <span class="material-icons-outlined">eco</span> WASTE2WORTH
       </div>
       <nav class="sidebar-nav">
-        <a href="/dashboard/volunteer" class="nav-item">
-          <span class="material-icons-outlined">event</span> Campaigns
-        </a>
-        <a href="/dashboard/volunteer/waste-portal" class="nav-item">
-          <span class="material-icons-outlined">recycling</span> Waste Portal
-        </a>
-        <a href="/dashboard/volunteer/product-story" class="nav-item">
-          <span class="material-icons-outlined">eco</span> Product Stories
-        </a>
-        <a href="/volunteer/scan" class="nav-item">
-          <span class="material-icons-outlined">qr_code_scanner</span> Scan QR Code
-        </a>
-        <div class="nav-section-title">My Profile</div>
         <a href="/volunteer/profile" class="nav-item active">
-          <span class="material-icons-outlined">manage_accounts</span> Volunteer Profile
+          <span class="material-icons-outlined">account_circle</span> Volunteer Profile
         </a>
         <a href="/volunteer/register" class="nav-item">
-          <span class="material-icons-outlined">volunteer_activism</span> Register / Update
+          <span class="material-icons-outlined">how_to_reg</span> Register / Update
         </a>
-        <div class="nav-section-title">Account</div>
-        <a href="#" id="logoutBtn" class="nav-item">
+        <a href="/volunteer/achievements" class="nav-item">
+          <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
+        </a>
+        <a href="/logout" id="logoutBtn" class="nav-item">
           <span class="material-icons-outlined">logout</span> Logout
         </a>
       </nav>
@@ -422,7 +427,15 @@
                     </div>
                   </div>
 
-                  <div class="form-group">
+                  <!-- Medals of Honor -->
+                  <div class="form-group" style="margin-top:24px;">
+                    <label class="form-label" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted);">Medals of Honor 🏅</label>
+                    <div id="infoMedals" style="display:flex; flex-wrap:wrap; gap:12px; margin-top:8px;">
+                      <span style="color:var(--color-text-muted); font-size:0.875rem;">No medals awarded yet.</span>
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin-top:20px;">
                     <label class="form-label" style="font-size:0.72rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--color-text-muted);">Skills</label>
                     <div id="infoSkills" class="skills-list">
                       <span style="color:var(--color-text-muted); font-size:0.875rem;">No skills listed.</span>

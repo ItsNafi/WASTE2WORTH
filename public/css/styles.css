@@ -154,6 +154,7 @@ button {
   position: sticky;
   top: 0;
   height: 100vh;
+  max-height: 100vh;
   width: var(--sidebar-width);
   background: var(--color-bg-sidebar);
   color: var(--color-text-white);
@@ -162,6 +163,7 @@ button {
   display: flex;
   flex-direction: column;
   transition: transform var(--transition-base);
+  overflow: hidden;
 }
 
 .sidebar-brand {
@@ -173,13 +175,38 @@ button {
   padding-bottom: var(--space-lg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   margin-bottom: var(--space-lg);
+  flex-shrink: 0;
 }
 
 .sidebar-nav {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  padding-right: 4px;
+  margin-right: -4px;
+}
+
+.sidebar-nav::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+}
+
+.sidebar-nav::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .nav-item {
@@ -192,6 +219,7 @@ button {
   transition: var(--transition-base);
   font-size: var(--font-size-sm);
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
@@ -213,6 +241,7 @@ button {
   border-top: 1px solid rgba(255, 255, 255, 0.15);
   padding-top: var(--space-lg);
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .nav-section-title {
@@ -467,6 +496,21 @@ button {
   background: var(--color-bg-card);
   transition: var(--transition-base);
   outline: none;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
+/* Remove number input spinner arrows (the glitch fix) */
+.form-input[type="number"]::-webkit-outer-spin-button,
+.form-input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.form-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -987,6 +1031,9 @@ button {
   }
   
   .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
     transform: translateX(-100%);
   }
   

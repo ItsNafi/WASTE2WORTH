@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Volunteer Achievements & Awards — Admin Portal</title>
+  <meta name="description" content="Admin management portal for volunteer environmental activities, milestone badges, and medal awards on WASTE2WORTH.">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    /* ── Admin Achievements Layout Styles ───────────────── */
+    .stat-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+    .stat-card-custom {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      padding: var(--space-lg);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .stat-card-custom:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+    .stat-card-icon {
+      width: 52px; height: 52px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 26px; flex-shrink: 0;
+    }
+    .stat-card-info h3 {
+      font-size: 26px; font-weight: 800;
+      color: var(--color-text-primary); margin: 0 0 2px;
+      line-height: 1.1;
+    }
+    .stat-card-info p {
+      font-size: 13px; color: var(--color-text-secondary); margin: 0; font-weight: 500;
+    }
+
+    /* Badges and Medals chips */
+    .chips-wrap {
+      display: flex; flex-wrap: wrap; gap: 6px;
+    }
+    .badge-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #e8f5e9; color: #2e7d32;
+      border: 1px solid #c8e6c9;
+      border-radius: var(--radius-pill);
+      padding: 3px 10px; font-size: 12px; font-weight: 600;
+    }
+    .medal-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: #fff8e1; color: #b78103;
+      border: 1px solid #ffe082;
+      border-radius: var(--radius-pill);
+      padding: 3px 10px; font-size: 12px; font-weight: 600;
+    }
+    .empty-chip {
+      font-size: 12px; color: var(--color-text-muted); font-style: italic;
+    }
+
+    .action-btn-group {
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .btn-action-sm {
+      padding: 6px 12px; font-size: 12px; font-weight: 600;
+      border-radius: var(--radius-sm); border: none; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 4px;
+      transition: all var(--transition-fast);
+    }
+    .btn-award-medal {
+      background: #fff8e1; color: #b78103; border: 1px solid #ffe082;
+    }
+    .btn-award-medal:hover { background: #ffe082; color: #795548; }
+
+    .btn-award-badge {
+      background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9;
+    }
+    .btn-award-badge:hover { background: #c8e6c9; color: #1b5e20; }
+
+    .btn-view-acts {
+      background: var(--color-bg-body); color: var(--color-text-secondary); border: 1px solid var(--color-border);
+    }
+    .btn-view-acts:hover { background: var(--color-border); color: var(--color-text-primary); }
+
+    /* Modal styles */
+    .admin-modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      z-index: 9500;
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity var(--transition-fast);
+      padding: 16px;
+    }
+    .admin-modal-overlay.active {
+      opacity: 1; pointer-events: all;
+    }
+    .admin-modal-box {
+      background: var(--color-bg-card);
+      border-radius: var(--radius-xl);
+      max-width: 540px; width: 100%;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+      overflow: hidden;
+      transform: translateY(16px) scale(0.96);
+      transition: transform var(--transition-base);
+    }
+    .admin-modal-overlay.active .admin-modal-box {
+      transform: translateY(0) scale(1);
+    }
+    .admin-modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--color-bg-body);
+    }
+    .admin-modal-title { font-size: 16px; font-weight: 700; color: var(--color-text-primary); margin: 0; }
+    .admin-modal-close {
+      background: none; border: none; font-size: 22px; cursor: pointer; color: var(--color-text-muted);
+      line-height: 1; padding: 4px;
+    }
+    .admin-modal-close:hover { color: var(--color-text-primary); }
+    .admin-modal-body { padding: 24px; max-height: 70vh; overflow-y: auto; }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+
+  <!-- ── Admin Sidebar ───────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <span class="material-icons-outlined">eco</span> WASTE2WORTH
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/dashboard/admin/waste-portal" class="nav-item">
+        <span class="material-icons-outlined">recycling</span> Waste Portal
+      </a>
+      <a href="/dashboard/admin/product-story" class="nav-item">
+        <span class="material-icons-outlined">menu_book</span> Product Stories
+      </a>
+      <a href="/dashboard/admin/achievements" class="nav-item active">
+        <span class="material-icons-outlined">emoji_events</span> Achievements & Badges
+      </a>
+      <a href="/dashboard/admin/price-directory" class="nav-item">
+        <span class="material-icons-outlined">sell</span> Price Directory
+      </a>
+      <a href="/dashboard/admin/volunteers" class="nav-item">
+        <span class="material-icons-outlined">volunteer_activism</span> Volunteers
+      </a>
+      <a href="/logout" id="logoutBtn" class="nav-item">
+        <span class="material-icons-outlined">logout</span> Logout
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="font-size:12px;color:rgba(255,255,255,0.5);text-align:center;">&copy; 2026 WASTE2WORTH</div>
+    </div>
+  </aside>
+
+  <div class="main-wrapper">
+
+    <!-- ── Header ─────────────────────────────────────── -->
+    <header class="header">
+      <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle Navigation">
+        <span class="material-icons-outlined">menu</span>
+      </button>
+      <div class="header-search">
+        <span class="material-icons-outlined">search</span>
+        <input type="text" id="volunteerSearchInput" placeholder="Search volunteer by name or email..." aria-label="Search volunteers">
+      </div>
+      <div class="header-user">
+        <div class="user-info">
+          <span class="user-name">Admin</span>
+          <span class="user-role">Administrator</span>
+        </div>
+        <div class="user-avatar">A</div>
+      </div>
+    </header>
+
+    <!-- ── Main Content ───────────────────────────────── -->
+    <main class="main-content">
+      <div class="page-header animate-fade-in" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+        <div>
+          <h1 class="page-title">🏆 Volunteer Achievements & Awards Center</h1>
+          <p class="page-subtitle">Track volunteer eco-activities, monitor milestone badges earned, and award Medals of Honor for exceptional environmental contributions.</p>
+        </div>
+        <button class="btn btn-outline" onclick="loadOverviewData()" style="font-size:13px;padding:8px 16px;">
+          <span class="material-icons-outlined" style="font-size:16px;">refresh</span> Refresh
+        </button>
+      </div>
+
+      <!-- Overview Stat Cards -->
+      <div class="stat-cards-grid animate-fade-in">
+        <div class="stat-card-custom">
+          <div class="stat-card-icon" style="background:#e8f5e9;color:#2e7d32;">
+            <span class="material-icons-outlined">groups</span>
+          </div>
+          <div class="stat-card-info">
+            <h3 id="statVolunteers">0</h3>
+            <p>Active Volunteers</p>
+          </div>
+        </div>
+
+        <div class="stat-card-custom">
+          <div class="stat-card-icon" style="background:#e3f2fd;color:#1565c0;">
+            <span class="material-icons-outlined">task_alt</span>
+          </div>
+          <div class="stat-card-info">
+            <h3 id="statActivities">0</h3>
+            <p>Total Completed Activities</p>
+          </div>
+        </div>
+
+        <div class="stat-card-custom">
+          <div class="stat-card-icon" style="background:#f3e5f5;color:#7b1fa2;">
+            <span class="material-icons-outlined">workspace_premium</span>
+          </div>
+          <div class="stat-card-info">
+            <h3 id="statBadges">0</h3>
+            <p>Milestone Badges Earned</p>
+          </div>
+        </div>
+
+        <div class="stat-card-custom">
+          <div class="stat-card-icon" style="background:#fff8e1;color:#b78103;">
+            <span class="material-icons-outlined">military_tech</span>
+          </div>
+          <div class="stat-card-info">
+            <h3 id="statMedals">0</h3>
+            <p>Medals of Honor Awarded</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Volunteers Achievement Roster -->
+      <div class="card animate-slide-up">
+        <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <h2 class="card-title">Volunteer Achievements & Recognition Roster</h2>
+          <span style="font-size:13px;color:var(--color-text-secondary);" id="rosterCount">Showing all volunteers</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Volunteer</th>
+                <th>Activities Done</th>
+                <th>Milestone Badges</th>
+                <th>Medals Awarded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="volunteerTbody">
+              <tr>
+                <td colspan="5" class="text-center" style="padding:var(--space-2xl);">
+                  <div class="spinner"></div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ── Modal: Award Medal ─────────────────────────────────── -->
+<div class="admin-modal-overlay" id="awardMedalModal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h3 class="admin-modal-title">🏅 Award Medal of Honor</h3>
+      <button class="admin-modal-close" onclick="closeModal('awardMedalModal')">&times;</button>
+    </div>
+    <div class="admin-modal-body">
+      <form id="awardMedalForm">
+        <input type="hidden" id="medalVolunteerId">
+        <div class="form-group">
+          <label class="form-label">Volunteer</label>
+          <input type="text" id="medalVolunteerName" class="form-input" readonly style="background:var(--color-bg-body);font-weight:600;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="medalType">Select Medal</label>
+          <select id="medalType" class="form-select" required>
+            <option value="gold_champion">🥇 Gold Eco Champion (+100 pts)</option>
+            <option value="community_hero">🏅 Community Impact Hero (+75 pts)</option>
+            <option value="green_leader">⭐ Green Leadership Award (+75 pts)</option>
+            <option value="special_rec">🎖️ Special Recognition Medal (+50 pts)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="medalReason">Reason / Citation</label>
+          <textarea id="medalReason" class="form-textarea" rows="3" placeholder="e.g. Outstanding commitment during community plastic cleanup drives..." required></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="medalBonus">Green Points Bonus</label>
+          <input type="number" id="medalBonus" class="form-input" value="100" min="0" max="500">
+        </div>
+        <button type="submit" id="awardMedalSubmitBtn" class="btn btn-primary-gradient btn-block">
+          <span class="material-icons-outlined">military_tech</span> Confirm & Award Medal
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: Award Badge ─────────────────────────────────── -->
+<div class="admin-modal-overlay" id="awardBadgeModal">
+  <div class="admin-modal-box">
+    <div class="admin-modal-header">
+      <h3 class="admin-modal-title">🎖️ Award Milestone Badge</h3>
+      <button class="admin-modal-close" onclick="closeModal('awardBadgeModal')">&times;</button>
+    </div>
+    <div class="admin-modal-body">
+      <form id="awardBadgeForm">
+        <input type="hidden" id="badgeVolunteerId">
+        <div class="form-group">
+          <label class="form-label">Volunteer</label>
+          <input type="text" id="badgeVolunteerName" class="form-input" readonly style="background:var(--color-bg-body);font-weight:600;">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="badgeKeySelect">Select Milestone Badge</label>
+          <select id="badgeKeySelect" class="form-select" required>
+            <option value="eco_starter">🌱 Eco Starter</option>
+            <option value="eco_contributor">♻️ Eco Contributor</option>
+            <option value="eco_champion">🌍 Eco Champion</option>
+          </select>
+        </div>
+        <button type="submit" id="awardBadgeSubmitBtn" class="btn btn-primary-gradient btn-block">
+          <span class="material-icons-outlined">workspace_premium</span> Grant Badge to Volunteer
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal: View Activities ─────────────────────────────── -->
+<div class="admin-modal-overlay" id="viewActivitiesModal">
+  <div class="admin-modal-box" style="max-width:680px;">
+    <div class="admin-modal-header">
+      <h3 class="admin-modal-title" id="activitiesModalTitle">📜 Volunteer Activity Log</h3>
+      <button class="admin-modal-close" onclick="closeModal('viewActivitiesModal')">&times;</button>
+    </div>
+    <div class="admin-modal-body" id="activitiesModalBody">
+      <div class="spinner"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast notification -->
+<div id="toast" class="toast" role="alert" aria-live="polite"></div>
+
+<script src="/js/app.js" defer></script>
+<script>
+let allVolunteers = [];
+
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.className   = `toast ${type} show`;
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+function openModal(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.add('active');
+}
+
+function closeModal(id) {
+  const m = document.getElementById(id);
+  if (m) m.classList.remove('active');
+}
+
+document.querySelectorAll('.admin-modal-overlay').forEach(m => {
+  m.addEventListener('click', (e) => {
+    if (e.target === m) closeModal(m.id);
+  });
+});
+
+async function loadOverviewData() {
+  const tbody = document.getElementById('volunteerTbody');
+  try {
+    const res = await fetch('/api/badges/admin/overview', { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load data');
+    allVolunteers = await res.json();
+    renderOverview(allVolunteers);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:#ef4444;padding:var(--space-xl);">Failed to load volunteer achievements.</td></tr>`;
+  }
+}
+
+function renderOverview(list) {
+  const tbody = document.getElementById('volunteerTbody');
+
+  let totalActivities = 0;
+  let totalBadges = 0;
+  let totalMedals = 0;
+
+  list.forEach(v => {
+    totalActivities += Number(v.completedActivitiesCount || 0);
+    totalBadges     += Number(v.badgesCount || 0);
+    totalMedals     += Number(v.medalsCount || 0);
+  });
+
+  document.getElementById('statVolunteers').textContent = list.length;
+  document.getElementById('statActivities').textContent = totalActivities;
+  document.getElementById('statBadges').textContent     = totalBadges;
+  document.getElementById('statMedals').textContent     = totalMedals;
+  document.getElementById('rosterCount').textContent    = `${list.length} volunteer${list.length === 1 ? '' : 's'} registered`;
+
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center" style="color:var(--color-text-secondary);padding:var(--space-xl);">No volunteers found.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = list.map(v => {
+    const badgesHtml = v.badges && v.badges.length
+      ? v.badges.map(b => `<span class="badge-chip">${b.emoji} ${b.badgeName}</span>`).join('')
+      : `<span class="empty-chip">No badges yet</span>`;
+
+    const medalsHtml = v.medals && v.medals.length
+      ? v.medals.map(m => `<span class="medal-chip">${m.medalIcon} ${m.medalName}</span>`).join('')
+      : `<span class="empty-chip">No medals yet</span>`;
+
+    return `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#2e7d32,#4caf50);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0;">
+              ${(v.fullName || v.userName || 'V').charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <div style="font-weight:700;color:var(--color-text-primary);font-size:14px;">${v.fullName || v.userName}</div>
+              <div style="font-size:12px;color:var(--color-text-secondary);">${v.userEmail || '—'}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--color-bg-body);padding:4px 12px;border-radius:100px;font-weight:700;font-size:13px;color:var(--color-primary);border:1px solid var(--color-border);">
+            <span class="material-icons-outlined" style="font-size:15px;">task_alt</span> ${v.completedActivitiesCount || 0}
+          </span>
+        </td>
+        <td><div class="chips-wrap">${badgesHtml}</div></td>
+        <td><div class="chips-wrap">${medalsHtml}</div></td>
+        <td>
+          <div class="action-btn-group">
+            <button class="btn-action-sm btn-award-medal" onclick="openMedalModal(${v.userId}, '${(v.fullName || v.userName).replace(/'/g, "\\'")}')">
+              <span>🏅</span> Award Medal
+            </button>
+            <button class="btn-action-sm btn-award-badge" onclick="openBadgeModal(${v.userId}, '${(v.fullName || v.userName).replace(/'/g, "\\'")}')">
+              <span>🎖️</span> Award Badge
+            </button>
+            <button class="btn-action-sm btn-view-acts" onclick="viewVolunteerActivities(${v.userId}, '${(v.fullName || v.userName).replace(/'/g, "\\'")}')">
+              <span class="material-icons-outlined" style="font-size:14px;">history</span> Logs
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+/* ── Filter search ─────────────────────────────────────── */
+document.getElementById('volunteerSearchInput').addEventListener('input', (e) => {
+  const q = e.target.value.toLowerCase().trim();
+  if (!q) {
+    renderOverview(allVolunteers);
+    return;
+  }
+  const filtered = allVolunteers.filter(v =>
+    (v.fullName && v.fullName.toLowerCase().includes(q)) ||
+    (v.userName && v.userName.toLowerCase().includes(q)) ||
+    (v.userEmail && v.userEmail.toLowerCase().includes(q))
+  );
+  renderOverview(filtered);
+});
+
+/* ── Medal Modal Logic ─────────────────────────────────── */
+function openMedalModal(userId, name) {
+  document.getElementById('medalVolunteerId').value   = userId;
+  document.getElementById('medalVolunteerName').value = name;
+  document.getElementById('medalReason').value        = '';
+  openModal('awardMedalModal');
+}
+
+document.getElementById('medalType').addEventListener('change', (e) => {
+  const map = { gold_champion: 100, community_hero: 75, green_leader: 75, special_rec: 50 };
+  document.getElementById('medalBonus').value = map[e.target.value] || 50;
+});
+
+document.getElementById('awardMedalForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('awardMedalSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Awarding Medal...';
+
+  const volunteerId = document.getElementById('medalVolunteerId').value;
+  const medalKey    = document.getElementById('medalType').value;
+  const reason      = document.getElementById('medalReason').value.trim();
+  const pointsBonus = document.getElementById('medalBonus').value;
+
+  try {
+    const res = await fetch(`/api/medals/award/${volunteerId}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medalKey, reason, pointsBonus }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to award medal');
+
+    closeModal('awardMedalModal');
+    showToast('Medal awarded successfully! 🏅', 'success');
+    loadOverviewData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span class="material-icons-outlined">military_tech</span> Confirm & Award Medal';
+  }
+});
+
+/* ── Badge Modal Logic ─────────────────────────────────── */
+function openBadgeModal(userId, name) {
+  document.getElementById('badgeVolunteerId').value   = userId;
+  document.getElementById('badgeVolunteerName').value = name;
+  openModal('awardBadgeModal');
+}
+
+document.getElementById('awardBadgeForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const submitBtn = document.getElementById('awardBadgeSubmitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Granting Badge...';
+
+  const volunteerId = document.getElementById('badgeVolunteerId').value;
+  const badgeKey    = document.getElementById('badgeKeySelect').value;
+
+  try {
+    const res = await fetch(`/api/badges/award/${volunteerId}`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ badgeKey }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to grant badge');
+
+    closeModal('awardBadgeModal');
+    showToast(data.message || 'Badge awarded successfully! 🎖️', 'success');
+    loadOverviewData();
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<span class="material-icons-outlined">workspace_premium</span> Grant Badge to Volunteer';
+  }
+});
+
+/* ── Activity History Modal Logic ──────────────────────── */
+async function viewVolunteerActivities(userId, name) {
+  document.getElementById('activitiesModalTitle').textContent = `📜 Activity History: ${name}`;
+  const body = document.getElementById('activitiesModalBody');
+  body.innerHTML = '<div class="spinner" style="margin:24px auto;"></div>';
+  openModal('viewActivitiesModal');
+
+  try {
+    const res = await fetch(`/api/badges/volunteer/${userId}`, { credentials: 'include' });
+    if (!res.ok) throw new Error('Failed to load activities');
+    const data = await res.json();
+
+    if (!data.activities || !data.activities.length) {
+      body.innerHTML = `<p style="color:var(--color-text-secondary);text-align:center;padding:24px;">No activities logged yet by this volunteer.</p>`;
+      return;
+    }
+
+    body.innerHTML = `
+      <div style="margin-bottom:12px;font-weight:600;color:var(--color-primary);font-size:13px;">
+        Total Completed Activities: ${data.count}
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Notes / Description</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${data.activities.map(a => `
+            <tr>
+              <td><strong>${a.activityType}</strong></td>
+              <td style="font-size:13px;color:var(--color-text-secondary);">${a.description || '—'}</td>
+              <td style="font-size:13px;white-space:nowrap;">${new Date(a.activityDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</td>
+              <td><span style="color:#2e7d32;font-weight:700;font-size:12px;">✓ Completed</span></td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (err) {
+    body.innerHTML = `<p style="color:#ef4444;text-align:center;padding:24px;">Failed to load activity logs.</p>`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadOverviewData();
+});
+</script>
+</body>
+</html>
